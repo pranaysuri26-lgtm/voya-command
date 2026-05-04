@@ -1,6 +1,18 @@
-const Database = require('better-sqlite3')
+// ─── Guard: better-sqlite3 is only available in standalone Electron mode ──────
+// When the app connects to a Railway server, this package is not installed.
+// Exporting {} here lets main.js's tryLoadLocal() receive a falsy db and fall
+// through to its `if (!db) return []` guards without crashing.
+let Database
+try {
+  Database = require('better-sqlite3')
+} catch (_) {
+  console.log('[DB] better-sqlite3 not available — running in server mode')
+  module.exports = {}
+  return // CommonJS early exit: skips the rest of this file
+}
+
 const path = require('path')
-const fs = require('fs')
+const fs   = require('fs')
 
 let db
 

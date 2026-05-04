@@ -14,22 +14,30 @@ function hashPin(pin) {
 }
 
 function tryLoadLocal() {
-  try {
-    db = require('./src/database/db')
-    agentManager = require('./src/agents/agentManager')
-    scheduler = require('./src/agents/scheduler')
+  // ── Railway mode ────────────────────────────────────────────────────────────
+  // All data flows through preload.js via HTTP/WebSocket to the Railway server.
+  // Local SQLite and agent modules are not required.
+  // Every IPC handler below already guards with `if (!db) return []` so the
+  // app starts cleanly and the login screen connects straight to Railway.
+  //
+  // To restore standalone local-SQLite mode, uncomment the block below:
+  //
+  // try {
+  //   db = require('./src/database/db')
+  //   agentManager = require('./src/agents/agentManager')
+  //   scheduler = require('./src/agents/scheduler')
+  //   agentManager.setHighActivityCallback((depth) => {
+  //     if (mainWindow && !mainWindow.isDestroyed()) {
+  //       mainWindow.webContents.send('high-activity', { message: 'High activity — responses may be delayed', depth })
+  //     }
+  //   })
+  //   return true
+  // } catch (err) {
+  //   console.warn('[Main] Local agents not available:', err.message)
+  //   return false
+  // }
 
-    // Wire queue high-activity warning → renderer toast
-    agentManager.setHighActivityCallback((depth) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('high-activity', { message: 'High activity — responses may be delayed', depth })
-      }
-    })
-    return true
-  } catch (err) {
-    console.warn('[Main] Local agents not available:', err.message)
-    return false
-  }
+  return false
 }
 
 let mainWindow
