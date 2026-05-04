@@ -87,29 +87,38 @@ export default function App() {
   }, [])
 
   async function init() {
-    const isFirst = await window.voyaAPI.getFirstLaunch()
-    const [pendingApprovals, allThreads, vp, away] = await Promise.all([
-      window.voyaAPI.getApprovals('inbox'),
-      window.voyaAPI.getThreads(),
-      window.voyaAPI.getVpProfile(),
-      window.voyaAPI.getChairmanAway(),
-    ])
-    setApprovals(pendingApprovals)
-    setThreads(allThreads)
-    setVpProfile(vp)
-    setChairmanAway(away)
+    try {
+      const isFirst = await window.voyaAPI.getFirstLaunch()
+      const [pendingApprovals, allThreads, vp, away] = await Promise.all([
+        window.voyaAPI.getApprovals('inbox'),
+        window.voyaAPI.getThreads(),
+        window.voyaAPI.getVpProfile(),
+        window.voyaAPI.getChairmanAway(),
+      ])
+      setApprovals(pendingApprovals)
+      setThreads(allThreads)
+      setVpProfile(vp)
+      setChairmanAway(away)
 
-    if (isFirst) {
-      await window.voyaAPI.setFirstLaunchDone()
-      const result = await window.voyaAPI.triggerWelcome()
-      if (result.content) {
-        setSelectedAgent('COO')
-        setActiveView('chat')
+      if (isFirst) {
+        await window.voyaAPI.setFirstLaunchDone()
+        const result = await window.voyaAPI.triggerWelcome()
+        if (result.content) {
+          setSelectedAgent('COO')
+          setActiveView('chat')
+        }
       }
-    }
 
-    setReady(true)
-    registerListeners()
+      setReady(true)
+      registerListeners()
+    } catch (err) {
+      // Token expired, server unreachable, or 401 — clear session and show login
+      console.warn('[App] init() failed, clearing session:', err.message)
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
+      setAuthed(false)
+      setReady(false)
+    }
   }
 
   function registerListeners() {
