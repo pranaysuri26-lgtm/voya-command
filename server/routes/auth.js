@@ -4,32 +4,25 @@ const router = express.Router()
 const db = require('../db/queries')
 const { signToken, requireAuth } = require('../middleware/auth')
 
-// POST /auth/register — first-time setup (chairman) or VP invite
+// POST /auth/register
+// Slot 1 → Chairman, Slot 2 → VP, Slot 3+ → blocked.
+// No invite codes. No complexity.
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, inviteCode } = req.body
+    const { email, password, name } = req.body
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' })
+
+    const userCount = await db.countUsers()
+    if (userCount >= 2) return res.status(403).json({ error: 'Registration closed' })
 
     const existing = await db.getUserByEmail(email)
     if (existing) return res.status(409).json({ error: 'Email already registered' })
 
-    const userCount = await db.countUsers()
-    let role = 'chairman'
-
-    if (userCount > 0) {
-      // Not first user — must have valid invite code
-      if (!inviteCode) return res.status(400).json({ error: 'Invite code required' })
-      const invite = await db.getInviteCode(inviteCode)
-      if (!invite) return res.status(400).json({ error: 'Invalid or expired invite code' })
-      role = invite.role
-      await db.markInviteUsed(inviteCode)
-    }
-
+    const role = userCount === 0 ? 'chairman' : 'vp'
     const hash = await bcrypt.hash(password, 10)
     const user = await db.createUser(email, hash, role, name)
     const token = signToken({ id: user.id, email: user.email, role: user.role, name: user.name })
 
-    // First launch
     const firstLaunchDone = await db.getFirstLaunchDone()
     res.json({ token, user: { id: user.id, email: user.email, role: user.role, name: user.name }, firstLaunch: !firstLaunchDone })
   } catch (err) {
@@ -61,20 +54,6 @@ router.post('/login', async (req, res) => {
 // GET /auth/me — validate token + return user
 router.get('/me', requireAuth, (req, res) => {
   res.json({ user: req.user })
-})
-
-// POST /auth/invite — chairman creates invite code for VP
-router.post('/invite', requireAuth, async (req, res) => {
-  try {
-    if (req.user.role !== 'chairman') return res.status(403).json({ error: 'Chairman only' })
-    const crypto = require('crypto')
-    const code = crypto.randomBytes(6).toString('hex').toUpperCase()
-    const invite = await db.createInviteCode(code, 'vp', req.user.id)
-    res.json({ code: invite.code, expiresAt: invite.expires_at })
-  } catch (err) {
-    console.error('[Auth] Invite error:', err.message)
-    res.status(500).json({ error: 'Failed to create invite' })
-  }
 })
 
 // GET /auth/first-launch

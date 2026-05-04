@@ -104,15 +104,14 @@ export function installWebAPI() {
       connectWS()
       return data
     },
-    register: async (email, password, name, inviteCode) => {
-      const data = await POST('/auth/register', { email, password, name, inviteCode })
+    register: async (email, password, name) => {
+      const data = await POST('/auth/register', { email, password, name })
       setToken(data.token)
       connectWS()
       return data
     },
     setToken: (t) => { setToken(t); if (t) connectWS() },
-    getMe:         () => GET('/auth/me'),
-    createInvite:  () => POST('/auth/invite'),
+    getMe: () => GET('/auth/me'),
 
     // ── App state ─────────────────────────────────────────────────────────────
     getFirstLaunch:    () => GET('/auth/first-launch').then(d => d.firstLaunch),

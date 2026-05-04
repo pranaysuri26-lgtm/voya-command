@@ -235,58 +235,21 @@ export default function Sidebar({
           >
             <span style={{ color: 'var(--accent)' }}>◈</span> Back to Chairman
           </button>
-        ) : (
-          <div style={{ display: 'flex', gap: 5 }}>
-            <button
-              onClick={vpProfile?.hasPin ? onSwitchToVp : onOpenVpSetup}
-              style={{
-                flex: 1, background: 'none', border: '1px solid var(--border)',
-                borderRadius: 6, padding: '5px 8px', cursor: 'pointer',
-                fontSize: 10, color: 'var(--text-3)', fontWeight: 600,
-                display: 'flex', alignItems: 'center', gap: 5,
-              }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = '#94A3B8'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-              title={vpProfile?.hasPin ? `Switch to ${vpName} mode` : 'Set up VP profile first'}
-            >
-              <span style={{ color: '#94A3B8' }}>▷</span>
-              {vpProfile?.hasPin ? `${vpName} mode` : 'Setup VP'}
-            </button>
-            <button
-              onClick={onOpenAwayModal}
-              style={{
-                background: chairmanAway?.active ? '#78350f33' : 'none',
-                border: `1px solid ${chairmanAway?.active ? '#f59e0b44' : 'var(--border)'}`,
-                borderRadius: 6, padding: '5px 7px', cursor: 'pointer',
-                fontSize: 11, color: chairmanAway?.active ? '#fbbf24' : 'var(--text-3)',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#f59e0b'; e.currentTarget.style.color = '#fbbf24' }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = chairmanAway?.active ? '#f59e0b44' : 'var(--border)'
-                e.currentTarget.style.color = chairmanAway?.active ? '#fbbf24' : 'var(--text-3)'
-              }}
-              title={chairmanAway?.active ? 'Away mode active — click to manage' : 'Set Chairman Away mode'}
-            >
-              ✈️
-            </button>
-          </div>
-        )}
-
-        {/* VP gear (setup) — visible only to Chairman */}
-        {!isVp && vpProfile?.hasPin && (
+        ) : vpProfile?.hasPin ? (
           <button
-            onClick={onOpenVpSetup}
+            onClick={onSwitchToVp}
             style={{
-              width: '100%', marginTop: 4, background: 'none', border: 'none',
-              color: 'var(--text-3)', fontSize: 10, cursor: 'pointer',
-              padding: '3px 0', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 4,
+              width: '100%', background: 'none', border: '1px solid var(--border)',
+              borderRadius: 6, padding: '5px 8px', cursor: 'pointer',
+              fontSize: 10, color: 'var(--text-3)', fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 5,
             }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-2)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}
+            onMouseEnter={e => e.currentTarget.style.borderColor = '#94A3B8'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
           >
-            ⚙ VP profile settings
+            <span style={{ color: '#94A3B8' }}>▷</span> {vpName} mode
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   )

@@ -5,7 +5,6 @@ export default function LoginScreen({ onAuth }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
-  const [inviteCode, setInviteCode] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -18,7 +17,7 @@ export default function LoginScreen({ onAuth }) {
       if (mode === 'login') {
         result = await window.voyaAPI.login(email, password)
       } else {
-        result = await window.voyaAPI.register(email, password, name || undefined, inviteCode || undefined)
+        result = await window.voyaAPI.register(email, password, name || undefined)
       }
       onAuth(result)
     } catch (err) {
@@ -100,22 +99,6 @@ export default function LoginScreen({ onAuth }) {
               style={{ width: '100%', boxSizing: 'border-box' }}
             />
           </div>
-
-          {mode === 'register' && (
-            <div>
-              <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>
-                Invite Code <span style={{ color: 'var(--text-3)', fontSize: 10 }}>(required for VP)</span>
-              </label>
-              <input
-                className="msg-input"
-                type="text"
-                value={inviteCode}
-                onChange={e => setInviteCode(e.target.value.toUpperCase())}
-                placeholder="XXXXXX"
-                style={{ width: '100%', boxSizing: 'border-box', letterSpacing: 2 }}
-              />
-            </div>
-          )}
 
           {error && (
             <div style={{

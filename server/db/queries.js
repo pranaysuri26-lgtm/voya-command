@@ -407,25 +407,6 @@ async function countUsers() {
   return parseInt(rows[0].count)
 }
 
-async function getInviteCode(code) {
-  const { rows } = await pool.query(
-    'SELECT * FROM invite_codes WHERE code=$1 AND used=FALSE AND expires_at > NOW()',
-    [code]
-  )
-  return rows[0] || null
-}
-
-async function createInviteCode(code, role, createdBy) {
-  const { rows } = await pool.query(
-    'INSERT INTO invite_codes (code,role,created_by) VALUES ($1,$2,$3) RETURNING *',
-    [code, role, createdBy]
-  )
-  return rows[0]
-}
-
-async function markInviteUsed(code) {
-  await pool.query('UPDATE invite_codes SET used=TRUE WHERE code=$1', [code])
-}
 
 async function getFirstLaunchDone() {
   const val = await getState('first_launch_done')
@@ -449,6 +430,5 @@ module.exports = {
   getVpProfile, getVpProfileWithNotes, upsertVpProfile, updateVpName, updateVpNotes,
   getChairmanAway, setChairmanAway, clearChairmanAway,
   getUserByEmail, createUser, countUsers,
-  getInviteCode, createInviteCode, markInviteUsed,
   getFirstLaunchDone, setFirstLaunchDone,
 }

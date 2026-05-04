@@ -10,16 +10,6 @@ const SCHEMA = `
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
 
-  CREATE TABLE IF NOT EXISTS invite_codes (
-    id BIGSERIAL PRIMARY KEY,
-    code TEXT UNIQUE NOT NULL,
-    role TEXT NOT NULL DEFAULT 'vp',
-    used BOOLEAN DEFAULT FALSE,
-    created_by BIGINT REFERENCES users(id),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '7 days'
-  );
-
   CREATE TABLE IF NOT EXISTS messages (
     id BIGSERIAL PRIMARY KEY,
     agent TEXT NOT NULL,

@@ -92,8 +92,8 @@ contextBridge.exposeInMainWorld('voyaAPI', {
     return data
   },
 
-  register: async (email, password, name, inviteCode) => {
-    const data = await POST('/auth/register', { email, password, name, inviteCode })
+  register: async (email, password, name) => {
+    const data = await POST('/auth/register', { email, password, name })
     setToken(data.token)
     connectWS()
     return data
@@ -105,8 +105,6 @@ contextBridge.exposeInMainWorld('voyaAPI', {
   },
 
   getMe: () => GET('/auth/me'),
-
-  createInvite: () => POST('/auth/invite'),
 
   // ── App State ────────────────────────────────────────────────────────────────
   getFirstLaunch: () =>
