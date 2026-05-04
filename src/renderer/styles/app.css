@@ -200,6 +200,8 @@ html.electron .sidebar { padding-top: 44px; } /* macOS traffic lights */
 
 /* ── Main panel ───────────────────────────────────────────────────────────── */
 .main-panel {
+  flex: 1;          /* fill all space between sidebar and right panel */
+  min-width: 0;     /* prevent flex blowout from wide content */
   display: flex;
   flex-direction: column;
   overflow: hidden;
