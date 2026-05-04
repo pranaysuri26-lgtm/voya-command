@@ -62,22 +62,24 @@ input, textarea { font-family: var(--font); }
 
 /* ── Layout ───────────────────────────────────────────────────────────────── */
 .app {
-  display: grid;
-  grid-template-columns: 220px 1fr 300px;
-  grid-template-rows: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
   height: 100vh;
   overflow: hidden;
 }
 
 /* ── Sidebar ──────────────────────────────────────────────────────────────── */
 .sidebar {
+  width: 240px;
+  flex-shrink: 0;
   background: var(--bg-1);
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-top: 44px; /* macOS traffic lights */
 }
+html.electron .sidebar { padding-top: 44px; } /* macOS traffic lights */
 
 .sidebar-logo {
   padding: 16px 16px 8px;
@@ -354,8 +356,8 @@ input, textarea { font-family: var(--font); }
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-  padding-top: 52px; /* macOS traffic lights */
 }
+html.electron .panel-header { padding-top: 52px; } /* macOS traffic lights */
 .panel-header h2 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
 .panel-header-sub { font-size: 11px; color: var(--text-3); margin-left: auto; }
 
@@ -581,13 +583,15 @@ input, textarea { font-family: var(--font); }
 
 /* ── Right panel ──────────────────────────────────────────────────────────── */
 .right-panel {
+  width: 300px;
+  flex-shrink: 0;
   background: var(--bg-1);
   border-left: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-top: 44px;
 }
+html.electron .right-panel { padding-top: 44px; } /* macOS traffic lights */
 
 .right-panel-tabs {
   display: flex;

@@ -10,5 +10,11 @@ if (typeof window !== 'undefined' && !window.voyaAPI) {
   installWebAPI()
 }
 
+// Add 'electron' class to <html> before first render so CSS can apply
+// macOS traffic-light padding only in Electron, not in the browser.
+if (typeof window !== 'undefined' && !window.__VOYA_WEB__) {
+  document.documentElement.classList.add('electron')
+}
+
 const root = createRoot(document.getElementById('root'))
 root.render(<App />)
