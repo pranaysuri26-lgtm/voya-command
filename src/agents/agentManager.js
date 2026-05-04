@@ -217,30 +217,17 @@ async function triggerDailyBriefing() {
 }
 
 async function notifyResolution(agent, approvalTitle, status, notes) {
-  const verb = status === 'approved' ? 'APPROVED' : 'REJECTED'
-  const instruction = status === 'approved'
-    ? 'Acknowledge briefly. One concrete next step — 2 sentences max.'
-    : 'Acknowledge briefly. One alternative or one clarifying question — 2 sentences max.'
-
-  const notification = `[Board resolution] Chairman ${verb} your proposal: "${approvalTitle}".${notes ? ` Note: "${notes}"` : ''} ${instruction}`
+  // No Claude API call here — notifications are low-value and were the primary
+  // cause of 429 rate-limit errors (fired once per resolved approval, outside
+  // the main queue, piling on top of ongoing agent responses).
+  const notification = `[Board resolution] Chairman ${status.toUpperCase()} your proposal: "${approvalTitle}".${notes ? ` Note: "${notes}"` : ''}`
   db.addMessage(agent, 'chairman', notification, 'system')
 
-  // Try AI response; fall back to a deterministic acknowledgment so something always appears.
-  let responseContent
-  try {
-    const history = db.getConversation(agent, 6)   // small window — notification only
-    const vpContext = getCurrentVpContext()
-    const result = await callAgent(agent, history, notification, [], [], [], { maxTokens: 256 }, vpContext)
-    responseContent = result.content
-  } catch (err) {
-    console.warn(`[Resolution notify] API failed for ${agent}, using fallback:`, err.message)
-    responseContent = status === 'approved'
-      ? `Understood — "${approvalTitle}" is approved. Moving forward.`
-      : `Noted — "${approvalTitle}" was declined. I'll revisit the approach.`
-  }
+  const responseContent = status === 'approved'
+    ? `Understood — "${approvalTitle}" is approved. Moving forward.`
+    : `Noted — "${approvalTitle}" was declined. I'll revisit the approach.`
 
   db.addMessage(agent, 'agent', responseContent, 'autonomous')
-
   return { content: responseContent, approvals: [], notification }
 }
 

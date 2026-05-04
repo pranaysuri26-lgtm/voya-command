@@ -209,26 +209,14 @@ async function triggerDailyBriefing() {
 }
 
 async function notifyResolution(agent, approvalTitle, status, notes) {
-  const verb = status === 'approved' ? 'APPROVED' : 'REJECTED'
-  const instruction = status === 'approved'
-    ? 'Acknowledge briefly. One concrete next step — 2 sentences max.'
-    : 'Acknowledge briefly. One alternative or one clarifying question — 2 sentences max.'
-
-  const notification = `[Board resolution] Chairman ${verb} your proposal: "${approvalTitle}".${notes ? ` Note: "${notes}"` : ''} ${instruction}`
+  // No Claude API call — notifications caused 429 errors by firing outside the
+  // main queue on every resolved approval. Instant hardcoded responses instead.
+  const notification = `[Board resolution] Chairman ${status.toUpperCase()} your proposal: "${approvalTitle}".${notes ? ` Note: "${notes}"` : ''}`
   await db.addMessage(agent, 'chairman', notification, 'system')
 
-  let responseContent
-  try {
-    const history = await db.getConversation(agent, 6)
-    const vpContext = await getCurrentVpContext()
-    const result = await callAgent(agent, history, notification, [], [], [], { maxTokens: 256 }, vpContext)
-    responseContent = result.content
-  } catch (err) {
-    console.warn(`[Resolution notify] API failed for ${agent}, using fallback:`, err.message)
-    responseContent = status === 'approved'
-      ? `Understood — "${approvalTitle}" is approved. Moving forward.`
-      : `Noted — "${approvalTitle}" was declined. I'll revisit the approach.`
-  }
+  const responseContent = status === 'approved'
+    ? `Understood — "${approvalTitle}" is approved. Moving forward.`
+    : `Noted — "${approvalTitle}" was declined. I'll revisit the approach.`
 
   await db.addMessage(agent, 'agent', responseContent, 'autonomous')
   return { content: responseContent, approvals: [], notification }
