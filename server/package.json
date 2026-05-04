@@ -4,7 +4,6 @@
   "description": "Voya Command — API + Agent Server",
   "main": "index.js",
   "scripts": {
-    "build": "cd .. && npm install && npm run build:web",
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
