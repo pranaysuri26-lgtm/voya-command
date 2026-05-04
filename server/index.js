@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const http = require('http')
 const cors = require('cors')
+const path = require('path')
 
 const { runMigrations } = require('./db/schema')
 const broadcast = require('./ws/broadcast')
@@ -24,6 +25,11 @@ app.use(cors({
   credentials: true,
 }))
 app.use(express.json({ limit: '10mb' }))
+
+// ─── Static web app ──────────────────────────────────────────────────────────
+// Serve the React SPA from server/public/ (built by `npm run build:web`).
+// Must come before API routes so /bundle.js and /index.html are served directly.
+app.use(express.static(path.join(__dirname, 'public')))
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }))
@@ -49,6 +55,13 @@ app.get('/decisions', requireAuth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
+})
+
+// ─── SPA catch-all ───────────────────────────────────────────────────────────
+// Any route not matched by an API handler returns index.html so React Router
+// can handle client-side navigation (e.g. a VP bookmarking /threads/42).
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'))
 })
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────

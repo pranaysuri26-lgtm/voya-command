@@ -5,3 +5,4 @@ dist/
 *.db
 *.db-journal
 out/
+server/public/bundle.js

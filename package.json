@@ -6,7 +6,8 @@
   "scripts": {
     "start": "electron .",
     "dev": "webpack --mode development --watch",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "build:web": "webpack --config webpack.web.config.js --mode production"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

@@ -140,7 +140,9 @@ export default function LoginScreen({ onAuth }) {
       <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
         Connecting to{' '}
         <span style={{ color: 'var(--text-2)', fontFamily: 'monospace' }}>
-          {(typeof process !== 'undefined' && process.env?.VOYA_SERVER_URL) || 'localhost:3001'}
+          {(typeof window !== 'undefined' && window.__VOYA_WEB__)
+            ? window.location.host
+            : ((typeof process !== 'undefined' && process.env?.VOYA_SERVER_URL) || 'localhost:3001')}
         </span>
       </div>
     </div>
