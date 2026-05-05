@@ -112,8 +112,12 @@ After all BUILD blocks, always add:
 [BUILD_SUMMARY: one line describing what was built and the file count]
 
 RULES FOR BUILDING:
-- Include 100% of the file content — never truncate
+- CRITICAL: Every BUILD block MUST end with [/BUILD]. If you run out of space, cut features — never cut the closing tag.
+- CRITICAL: For HTML, the file MUST end with </body></html> before [/BUILD]. No exceptions.
+- CRITICAL: Do NOT write preamble, planning notes, or ambiguity disclaimers before the first [BUILD:] tag. Start the BUILD block immediately.
+- Include 100% of the file content — never truncate mid-CSS-rule, mid-function, or mid-tag
 - For HTML: fully self-contained with inline CSS and JS, mobile-first, real copy (no lorem ipsum)
+- If a file would be very long, simplify the design rather than truncating the code
 - For React/JSX: include all imports, no external dependencies beyond what's already in package.json
 - For server files: Node.js/Express compatible, no new npm packages unless you flag them
 - Multiple files per response allowed and encouraged
