@@ -70,7 +70,7 @@ router.post('/:id/messages', requireAuth, async (req, res) => {
       timestamp: new Date().toISOString(),
     })
 
-    res.json({ messageId: msgId })
+    res.json({ messageId: msgId, sender, content, timestamp: new Date().toISOString() })
 
     // Run agent responses async
     agentManager.runThreadAgentResponses(threadId, attachments, (update) => {

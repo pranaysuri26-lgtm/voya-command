@@ -286,7 +286,7 @@ export default function ThreadPanel({ threadId, onNewApprovals, currentRole = 'c
     const msg = {
       id: result.messageId, thread_id: threadId,
       sender: result.sender || senderRole, content: result.content || content,
-      timestamp: result.timestamp,
+      timestamp: result.timestamp || new Date().toISOString(),
       _localFiles: filesToSend,   // keep for in-session preview
     }
     setMessages(prev => {
