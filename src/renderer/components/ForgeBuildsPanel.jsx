@@ -10,7 +10,9 @@ function formatTimeAgo(ts) {
   return d.toLocaleDateString()
 }
 
-function fileIcon(lang) {
+function fileIcon(lang, filename = '') {
+  const f = filename.toLowerCase()
+  if (f.includes('instagram/') || f.includes('story-') || f.includes('portrait-')) return '📸'
   if (lang === 'html') return '🌐'
   if (lang === 'javascript' || lang === 'jsx') return '⚡'
   if (lang === 'typescript' || lang === 'tsx') return '🔷'
@@ -25,10 +27,21 @@ function langLabel(lang) {
   return map[lang] || (lang || 'FILE').toUpperCase()
 }
 
+// Detect Instagram post type from filename and return dimensions + label
+function getInstaInfo(filename = '') {
+  const f = filename.toLowerCase()
+  if (f.includes('instagram/') || f.includes('insta')) {
+    if (f.includes('story') || f.includes('reel')) return { w: 405, h: 720, label: 'Story · 1080×1920', badge: 'STORY', color: '#e040fb' }
+    if (f.includes('portrait')) return { w: 405, h: 506, label: 'Portrait · 1080×1350', badge: '4:5', color: '#ff7043' }
+    return { w: 405, h: 405, label: 'Square · 1080×1080', badge: 'SQUARE', color: '#42a5f5' }
+  }
+  return null
+}
+
 export default function ForgeBuildsPanel({ onNewBuildEvent }) {
   const [sessions, setSessions] = useState([])
-  const [expanded, setExpanded] = useState(null) // session_id
-  const [preview, setPreview] = useState(null)   // { id, filename, language, url }
+  const [expanded, setExpanded] = useState(null)
+  const [preview, setPreview] = useState(null)   // { id, filename, language, url, insta }
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -51,7 +64,8 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
 
   function openPreview(file) {
     const url = window.voyaAPI.forgePreviewUrl(file.id)
-    setPreview({ ...file, url })
+    const insta = getInstaInfo(file.filename)
+    setPreview({ ...file, url, insta })
   }
 
   if (loading) return (
@@ -79,9 +93,16 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
         }}>
           <div style={{ fontSize: 32 }}>🔨</div>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)' }}>No builds yet</div>
-          <div style={{ fontSize: 12, textAlign: 'center', maxWidth: 260, lineHeight: 1.5 }}>
-            Message FORGE and ask it to build something — landing pages, components, anything.
+          <div style={{ fontSize: 12, textAlign: 'center', maxWidth: 260, lineHeight: 1.6 }}>
+            Message FORGE to build landing pages, Instagram posts, components — anything.
             Files appear here automatically.
+          </div>
+          <div style={{
+            marginTop: 8, fontSize: 11, color: 'var(--text-3)',
+            background: 'var(--bg-3)', border: '1px solid var(--border)',
+            borderRadius: 8, padding: '8px 12px', maxWidth: 280, textAlign: 'center', lineHeight: 1.5,
+          }}>
+            Try: <span style={{ color: 'var(--text-2)', fontStyle: 'italic' }}>"Build me an Instagram post announcing Voya's waitlist"</span>
           </div>
         </div>
       ) : (
@@ -106,7 +127,9 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
                   borderBottom: expanded === session.session_id ? '1px solid var(--border)' : 'none',
                 }}
               >
-                <span style={{ fontSize: 14 }}>🔨</span>
+                <span style={{ fontSize: 14 }}>
+                  {session.files.some(f => getInstaInfo(f.filename)) ? '📸' : '🔨'}
+                </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize: 12, fontWeight: 600, color: 'var(--text-1)',
@@ -116,8 +139,18 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
                       ? session.task_description.slice(0, 80)
                       : `Build session · ${session.files.length} file${session.files.length > 1 ? 's' : ''}`}
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>
-                    {session.files.length} file{session.files.length > 1 ? 's' : ''} · {formatTimeAgo(session.created_at)}
+                  <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2, display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <span>{session.files.length} file{session.files.length > 1 ? 's' : ''}</span>
+                    <span>·</span>
+                    <span>{formatTimeAgo(session.created_at)}</span>
+                    {/* Instagram badge if session contains insta posts */}
+                    {session.files.some(f => getInstaInfo(f.filename)) && (
+                      <span style={{
+                        fontSize: 8, fontWeight: 700, background: '#e040fb22',
+                        border: '1px solid #e040fb44', color: '#e040fb',
+                        borderRadius: 3, padding: '1px 5px', letterSpacing: '0.04em',
+                      }}>INSTAGRAM</span>
+                    )}
                   </div>
                 </div>
                 <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
@@ -128,59 +161,75 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
               {/* File list */}
               {expanded === session.session_id && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {session.files.map((file) => (
-                    <div
-                      key={file.id}
-                      style={{
-                        padding: '10px 14px',
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        borderBottom: '1px solid var(--border)',
-                        background: 'var(--bg-2)',
-                      }}
-                    >
-                      <span style={{ fontSize: 16, flexShrink: 0 }}>{fileIcon(file.language)}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{
-                          fontSize: 11, fontWeight: 600, color: 'var(--text-1)',
-                          fontFamily: 'monospace',
-                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        }}>
-                          {file.filename}
+                  {session.files.map((file) => {
+                    const insta = getInstaInfo(file.filename)
+                    return (
+                      <div
+                        key={file.id}
+                        style={{
+                          padding: '10px 14px',
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          borderBottom: '1px solid var(--border)',
+                          background: 'var(--bg-2)',
+                        }}
+                      >
+                        <span style={{ fontSize: 16, flexShrink: 0 }}>{fileIcon(file.language, file.filename)}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            fontSize: 11, fontWeight: 600, color: 'var(--text-1)',
+                            fontFamily: 'monospace',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}>
+                            {file.filename}
+                          </div>
+                          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1, display: 'flex', gap: 6, alignItems: 'center' }}>
+                            <span>{langLabel(file.language)}</span>
+                            <span>·</span>
+                            <span>{Math.round((file.content?.length || 0) / 1000 * 10) / 10}KB</span>
+                            {insta && (
+                              <span style={{
+                                fontSize: 8, fontWeight: 700,
+                                background: insta.color + '22',
+                                border: `1px solid ${insta.color}44`,
+                                color: insta.color,
+                                borderRadius: 3, padding: '1px 5px', letterSpacing: '0.04em',
+                              }}>{insta.badge}</span>
+                            )}
+                          </div>
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
-                          {langLabel(file.language)} · {Math.round((file.content?.length || 0) / 1000 * 10) / 10}KB
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                        {file.language === 'html' && (
+                        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                          {file.language === 'html' && (
+                            <button
+                              onClick={() => openPreview(file)}
+                              style={{
+                                background: insta ? insta.color + '22' : '#00BCD422',
+                                border: `1px solid ${insta ? insta.color + '44' : '#00BCD444'}`,
+                                color: insta ? insta.color : '#00BCD4',
+                                borderRadius: 5,
+                                fontSize: 10, padding: '4px 9px', cursor: 'pointer',
+                                fontWeight: 600, letterSpacing: '0.03em',
+                              }}
+                            >
+                              {insta ? '📸 Preview' : 'Preview'}
+                            </button>
+                          )}
                           <button
-                            onClick={() => openPreview(file)}
+                            onClick={() => {
+                              const url = window.voyaAPI.forgePreviewUrl(file.id)
+                              window.open(url, '_blank')
+                            }}
                             style={{
-                              background: '#00BCD422', border: '1px solid #00BCD444',
-                              color: '#00BCD4', borderRadius: 5,
+                              background: 'none', border: '1px solid var(--border)',
+                              color: 'var(--text-2)', borderRadius: 5,
                               fontSize: 10, padding: '4px 9px', cursor: 'pointer',
-                              fontWeight: 600, letterSpacing: '0.03em',
                             }}
                           >
-                            Preview
+                            Open ↗
                           </button>
-                        )}
-                        <button
-                          onClick={() => {
-                            const url = window.voyaAPI.forgePreviewUrl(file.id)
-                            window.open(url, '_blank')
-                          }}
-                          style={{
-                            background: 'none', border: '1px solid var(--border)',
-                            color: 'var(--text-2)', borderRadius: 5,
-                            fontSize: 10, padding: '4px 9px', cursor: 'pointer',
-                          }}
-                        >
-                          Open ↗
-                        </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -193,17 +242,22 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
         <div
           style={{
             position: 'fixed', inset: 0, zIndex: 200,
-            background: 'rgba(0,0,0,0.7)',
+            background: 'rgba(0,0,0,0.75)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
           onClick={() => setPreview(null)}
         >
           <div
             style={{
-              width: '90vw', height: '88vh', borderRadius: 12,
+              borderRadius: 12,
               overflow: 'hidden', border: '1px solid var(--border)',
               display: 'flex', flexDirection: 'column',
               background: 'var(--bg-2)',
+              // Instagram posts: fixed size. Web pages: fill 90vw×88vh
+              width:  preview.insta ? (preview.insta.w + 32) + 'px' : '90vw',
+              height: preview.insta ? 'auto' : '88vh',
+              maxWidth: '95vw',
+              maxHeight: '95vh',
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -213,37 +267,72 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
               display: 'flex', alignItems: 'center', gap: 10,
               borderBottom: '1px solid var(--border)',
               background: 'var(--bg-3)',
+              flexShrink: 0,
             }}>
-              <span style={{ fontSize: 16 }}>{fileIcon(preview.language)}</span>
-              <span style={{ flex: 1, fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: 'var(--text-1)' }}>
+              <span style={{ fontSize: 16 }}>{fileIcon(preview.language, preview.filename)}</span>
+              <span style={{ flex: 1, fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {preview.filename}
               </span>
+              {/* Instagram size label */}
+              {preview.insta && (
+                <span style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                  background: preview.insta.color + '22', border: `1px solid ${preview.insta.color}55`,
+                  color: preview.insta.color, borderRadius: 4, padding: '2px 7px',
+                }}>
+                  {preview.insta.label}
+                </span>
+              )}
               <button
                 onClick={() => window.open(preview.url, '_blank')}
                 style={{
                   background: '#00BCD422', border: '1px solid #00BCD444',
                   color: '#00BCD4', borderRadius: 5,
-                  fontSize: 10, padding: '5px 10px', cursor: 'pointer', fontWeight: 600,
+                  fontSize: 10, padding: '5px 10px', cursor: 'pointer', fontWeight: 600, flexShrink: 0,
                 }}
               >
-                Open full page ↗
+                Open ↗
               </button>
               <button
                 onClick={() => setPreview(null)}
                 style={{
                   background: 'none', border: 'none', color: 'var(--text-3)',
-                  fontSize: 18, cursor: 'pointer', padding: '0 4px',
+                  fontSize: 18, cursor: 'pointer', padding: '0 4px', flexShrink: 0,
                 }}
               >
                 ×
               </button>
             </div>
-            {/* iframe preview */}
-            <iframe
-              src={preview.url}
-              style={{ flex: 1, border: 'none', background: '#fff' }}
-              title={preview.filename}
-            />
+
+            {/* iframe — constrained for Instagram, full for web */}
+            {preview.insta ? (
+              <div style={{
+                padding: 16, background: '#111',
+                display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center',
+              }}>
+                <div style={{ fontSize: 10, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  Preview (scaled to fit) · Open ↗ to view at full 1080px
+                </div>
+                <iframe
+                  src={preview.url}
+                  style={{
+                    width: preview.insta.w + 'px',
+                    height: preview.insta.h + 'px',
+                    border: 'none',
+                    borderRadius: 8,
+                    display: 'block',
+                    flexShrink: 0,
+                  }}
+                  title={preview.filename}
+                />
+              </div>
+            ) : (
+              <iframe
+                src={preview.url}
+                style={{ flex: 1, border: 'none', background: '#fff' }}
+                title={preview.filename}
+              />
+            )}
           </div>
         </div>
       )}
