@@ -210,6 +210,18 @@ export default function ThreadPanel({ threadId, onNewApprovals, currentRole = 'c
     setPendingFiles([])
   }, [threadId])
 
+  // Reload messages when WS reconnects (Railway wake) or window regains focus
+  useEffect(() => {
+    if (!threadId) return
+    const unsubWs = window.voyaAPI.on('ws-connected', () => loadThread())
+    const onFocus = () => loadThread()
+    window.addEventListener('focus', onFocus)
+    return () => {
+      unsubWs?.()
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [threadId])
+
   useEffect(() => {
     const unsub = window.voyaAPI.on('thread-update', (update) => {
       if (update.threadId !== threadId) return

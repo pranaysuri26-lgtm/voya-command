@@ -292,6 +292,17 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
     setPendingFiles([])
   }, [selectedAgent])
 
+  // Reload on WS reconnect (Railway wake) or window focus
+  useEffect(() => {
+    const unsubWs = window.voyaAPI.on('ws-connected', () => loadHistory())
+    const onFocus = () => loadHistory()
+    window.addEventListener('focus', onFocus)
+    return () => {
+      unsubWs?.()
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [selectedAgent])
+
   // Listen for agent acknowledgment pushed from main after approval resolution.
   // Show inline if viewing that agent; DB write already happened so loadHistory() picks it up on next visit.
   useEffect(() => {
