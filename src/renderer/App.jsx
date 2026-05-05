@@ -7,6 +7,8 @@ import NewThreadModal from './components/NewThreadModal'
 import ApprovalInbox from './components/ApprovalInbox'
 import DecisionLog from './components/DecisionLog'
 import OversightPanel from './components/OversightPanel'
+import TaskBoard from './components/TaskBoard'
+import MorningBrief from './components/MorningBrief'
 import ChairmanAwayBanner from './components/ChairmanAwayBanner'
 import ChairmanAwayModal from './components/ChairmanAwayModal'
 import VPSetupModal from './components/VPSetupModal'
@@ -114,6 +116,14 @@ export default function App() {
 
       setReady(true)
       registerListeners()
+
+      // Auto-show morning brief once per day
+      const today = new Date().toDateString()
+      const lastBriefDate = localStorage.getItem('voya_last_brief_date')
+      if (lastBriefDate !== today && !isFirst) {
+        localStorage.setItem('voya_last_brief_date', today)
+        setActiveView('brief')
+      }
     } catch (err) {
       // Token expired, server unreachable, or 401 — clear session and show login
       console.warn('[App] init() failed, clearing session:', err.message)
@@ -281,6 +291,16 @@ export default function App() {
     setSelectedThread(null)
   }
 
+  function selectTasks() {
+    setActiveView('tasks')
+    setSelectedThread(null)
+  }
+
+  function selectBrief() {
+    setActiveView('brief')
+    setSelectedThread(null)
+  }
+
   async function escalateToBoard(topic) {
     const result = await window.voyaAPI.startDiscussion(topic)
     // no-op navigation — discussions are legacy
@@ -382,6 +402,8 @@ export default function App() {
         onNewThread={() => setIsNewThreadModalOpen(true)}
         onSelectDecisions={() => setActiveView('decisions')}
         onSelectDirect={selectDirect}
+        onSelectTasks={selectTasks}
+        onSelectBrief={selectBrief}
         currentRole={currentRole}
         vpProfile={vpProfile}
         chairmanAway={chairmanAway}
@@ -430,6 +452,14 @@ export default function App() {
           />
         )}
         {activeView === 'decisions' && <DecisionLog />}
+        {activeView === 'tasks' && <TaskBoard />}
+        {activeView === 'brief' && (
+          <MorningBrief
+            onClose={() => setActiveView('chat')}
+            onSelectAgent={selectAgent}
+            onViewTasks={selectTasks}
+          />
+        )}
       </div>
 
       {/* ── Right panel ── */}

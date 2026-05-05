@@ -92,6 +92,27 @@ const SCHEMA = `
     value TEXT
   );
 
+  CREATE TABLE IF NOT EXISTS tasks (
+    id BIGSERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    owner TEXT NOT NULL DEFAULT 'team',
+    status TEXT DEFAULT 'todo',
+    priority TEXT DEFAULT 'medium',
+    deadline DATE,
+    source_type TEXT DEFAULT 'manual',
+    source_id BIGINT,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  );
+
+  CREATE TABLE IF NOT EXISTS agent_memories (
+    agent TEXT PRIMARY KEY,
+    summary TEXT DEFAULT '',
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  );
+
   CREATE TABLE IF NOT EXISTS vp_profile (
     id INTEGER PRIMARY KEY DEFAULT 1,
     name TEXT DEFAULT 'VP',

@@ -14,46 +14,42 @@ function getClient() {
   return client
 }
 
-// ─── Request queue (FIX 1) ────────────────────────────────────────────────────
-// All Claude API calls are serialised through this queue so we never fire
-// multiple requests simultaneously. A 2 s gap is enforced between each call.
+// ─── Per-agent request queues ─────────────────────────────────────────────────
+// Each agent has its own serial lane so concurrent thread/direct messages don't
+// block each other.  A small inter-call gap prevents 429s per agent.
 
-const QUEUE_DELAY_MS   = 2000
-const QUEUE_WARN_AT    = 10    // warn chairman when backlog reaches this
+const QUEUE_DELAY_MS = 300   // gap between successive calls TO THE SAME AGENT
+const QUEUE_WARN_AT  = 10    // warn chairman when any agent's backlog reaches this
 
-let _queue       = []
-let _processing  = false
-let _warnCb      = null   // set via setQueueWarningCallback()
+const _agentQueues      = {}   // agent → { queue: [], processing: bool }
+let _warnCb = null
 
-/** Register a callback that fires when the queue depth hits QUEUE_WARN_AT. */
 function setQueueWarningCallback(fn) { _warnCb = fn }
 
-/** Wrap any async function so it runs in the serial queue. */
-function enqueue(fn) {
+function _getAgentLane(agent) {
+  if (!_agentQueues[agent]) _agentQueues[agent] = { queue: [], processing: false }
+  return _agentQueues[agent]
+}
+
+/** Run fn in the per-agent serial lane (agents run concurrently with each other). */
+function enqueue(fn, agent = 'default') {
+  const lane = _getAgentLane(agent)
   return new Promise((resolve, reject) => {
-    _queue.push({ fn, resolve, reject })
-    if (_queue.length >= QUEUE_WARN_AT && _warnCb) {
-      _warnCb(_queue.length)
-    }
-    _drain()
+    lane.queue.push({ fn, resolve, reject })
+    if (lane.queue.length >= QUEUE_WARN_AT && _warnCb) _warnCb(lane.queue.length)
+    _drainLane(lane)
   })
 }
 
-async function _drain() {
-  if (_processing) return
-  _processing = true
-  while (_queue.length > 0) {
-    const { fn, resolve, reject } = _queue.shift()
-    try {
-      resolve(await fn())
-    } catch (err) {
-      reject(err)
-    }
-    if (_queue.length > 0) {
-      await _sleep(QUEUE_DELAY_MS)
-    }
+async function _drainLane(lane) {
+  if (lane.processing) return
+  lane.processing = true
+  while (lane.queue.length > 0) {
+    const { fn, resolve, reject } = lane.queue.shift()
+    try { resolve(await fn()) } catch (err) { reject(err) }
+    if (lane.queue.length > 0) await _sleep(QUEUE_DELAY_MS)
   }
-  _processing = false
+  lane.processing = false
 }
 
 // ─── Exponential backoff retry (FIX 3) ───────────────────────────────────────
@@ -100,6 +96,7 @@ function _sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 const OPEN_DISCUSSION_RE = /\[OPEN DISCUSSION:\s*([^|\]]+?)(?:\|([^\]]*))?\]/
 const RECOMMENDATION_RE  = /\[RECOMMENDATION READY\]/
 const CREATE_THREAD_RE   = /\[CREATE THREAD:\s*"([^"]+)"\s*\|\s*([^|]+)\|\s*([^\]]+)\]/i
+const TASK_RE            = /\[TASK:\s*([^|\]]+)\|([^|\]]+)(?:\|([^|\]]+))?(?:\|([^\]]+))?\]/g
 
 function parseFlags(content) {
   const approvals = []
@@ -123,7 +120,20 @@ function parseFlags(content) {
     reason: ctMatch[3].trim(),
   } : null
 
-  return { approvals, openDiscussion, recommendationReady, createThread }
+  // Parse task proposals: [TASK: title | owner | deadline? | priority?]
+  const tasks = []
+  let tm
+  const taskRe = new RegExp(TASK_RE.source, 'g')
+  while ((tm = taskRe.exec(content)) !== null) {
+    tasks.push({
+      title:    tm[1].trim(),
+      owner:    tm[2].trim(),
+      deadline: tm[3]?.trim() || null,
+      priority: tm[4]?.trim() || 'medium',
+    })
+  }
+
+  return { approvals, openDiscussion, recommendationReady, createThread, tasks }
 }
 
 // ─── Attachment helpers ───────────────────────────────────────────────────────
@@ -168,11 +178,11 @@ const DECISIONS_LIMIT       = 4   // recent decisions shown in system prompt
 const PENDING_APPROVALS_LIMIT = 5 // pending approvals shown in system prompt
 
 // ─── MODE 1 — direct 1-on-1 ──────────────────────────────────────────────────
-async function callAgent(agent, conversationHistory, newMessage, recentDecisions = [], pendingApprovals = [], attachments = [], opts = {}, vpContext = '') {
-  return enqueue(() => _withRetry(agent, () => _callAgent(agent, conversationHistory, newMessage, recentDecisions, pendingApprovals, attachments, opts, vpContext)))
+async function callAgent(agent, conversationHistory, newMessage, recentDecisions = [], pendingApprovals = [], attachments = [], opts = {}, vpContext = '', memoryContext = '') {
+  return enqueue(() => _withRetry(agent, () => _callAgent(agent, conversationHistory, newMessage, recentDecisions, pendingApprovals, attachments, opts, vpContext, memoryContext)), agent)
 }
 
-async function _callAgent(agent, conversationHistory, newMessage, recentDecisions, pendingApprovals, attachments, opts, vpContext) {
+async function _callAgent(agent, conversationHistory, newMessage, recentDecisions, pendingApprovals, attachments, opts, vpContext, memoryContext) {
   const model     = process.env.CLAUDE_MODEL || 'claude-sonnet-4-6'
   const maxTokens = opts.maxTokens || 1024
 
@@ -183,8 +193,13 @@ async function _callAgent(agent, conversationHistory, newMessage, recentDecision
 
   let systemPrompt = AGENT_PROMPTS[agent]
 
+  // ── Memory bank (agent-specific history + summary) ────────────────────────
+  if (memoryContext) {
+    systemPrompt += memoryContext
+  }
+
   if (trimmedDecisions.length > 0) {
-    systemPrompt += '\n\nRECENT DECISIONS:\n'
+    systemPrompt += '\n\nRECENT DECISIONS (all agents):\n'
     systemPrompt += trimmedDecisions
       .map(d => `- [${d.outcome.toUpperCase()}] ${d.title}: ${d.description}`)
       .join('\n')
@@ -199,6 +214,7 @@ async function _callAgent(agent, conversationHistory, newMessage, recentDecision
 
   if (vpContext) systemPrompt += vpContext
   systemPrompt += `\n\nToday: ${new Date().toDateString()}`
+  systemPrompt += `\n\nTo assign or create a task: [TASK: title | owner | deadline(YYYY-MM-DD or null) | priority(low/medium/high/urgent)]`
 
   // Build alternating message array from trimmed history
   const messages = []
@@ -223,7 +239,7 @@ async function _callAgent(agent, conversationHistory, newMessage, recentDecision
 
 // ─── MODE 2 — board discussion ────────────────────────────────────────────────
 async function callAgentForDiscussion(agent, topic, discussionSoFar, recentDecisions = [], vpContext = '') {
-  return enqueue(() => _withRetry(agent, () => _callAgentForDiscussion(agent, topic, discussionSoFar, recentDecisions, vpContext)))
+  return enqueue(() => _withRetry(agent, () => _callAgentForDiscussion(agent, topic, discussionSoFar, recentDecisions, vpContext)), agent)
 }
 
 async function _callAgentForDiscussion(agent, topic, discussionSoFar, recentDecisions, vpContext) {
@@ -275,7 +291,7 @@ async function _callAgentForDiscussion(agent, topic, discussionSoFar, recentDeci
 
 // ─── MODE 2b — autonomous task ────────────────────────────────────────────────
 async function callAgentAutonomous(agent, task, recentDecisions = [], vpContext = '') {
-  return enqueue(() => _withRetry(agent, () => _callAgentAutonomous(agent, task, recentDecisions, vpContext)))
+  return enqueue(() => _withRetry(agent, () => _callAgentAutonomous(agent, task, recentDecisions, vpContext)), agent)
 }
 
 async function _callAgentAutonomous(agent, task, recentDecisions, vpContext) {
@@ -309,14 +325,25 @@ function buildThreadMessages(agentKey, history, currentAttachments = []) {
   // FIX 2: trim to last THREAD_HISTORY_LIMIT messages before building API payload
   const trimmed = history.slice(-THREAD_HISTORY_LIMIT)
 
+  // Split current attachments into text-embeddable and image types
+  const textAttachments  = currentAttachments.filter(a => a.text && !a.type?.startsWith('image/'))
+  const imageAttachments = currentAttachments.filter(a => a.type?.startsWith('image/') && a.base64)
+
+  // Build a text block for all attached text files
+  const textAttachmentBlock = textAttachments.length > 0
+    ? '\n\n' + textAttachments.map(a => `[Attached file: ${a.name}]\n\`\`\`\n${a.text}\n\`\`\``).join('\n\n')
+    : ''
+
   const messages = []
   let pendingUserParts = []
 
   function flushUser(isLast = false) {
     if (pendingUserParts.length === 0) return
-    const text = pendingUserParts.join('\n\n')
-    const content = (isLast && currentAttachments.length > 0)
-      ? buildContentWithAttachments(text, currentAttachments)
+    let text = pendingUserParts.join('\n\n')
+    // Embed text file contents into the last (most recent) user message
+    if (isLast && textAttachmentBlock) text += textAttachmentBlock
+    const content = (isLast && imageAttachments.length > 0)
+      ? buildContentWithAttachments(text, imageAttachments)
       : text
     messages.push({ role: 'user', content })
     pendingUserParts = []
@@ -325,12 +352,24 @@ function buildThreadMessages(agentKey, history, currentAttachments = []) {
   for (let i = 0; i < trimmed.length; i++) {
     const msg = trimmed[i]
     const isLastMsg = i === trimmed.length - 1
+
     if (msg.sender === agentKey) {
       flushUser(false)
       messages.push({ role: 'assistant', content: msg.content })
     } else {
-      const label = msg.sender === 'chairman' ? 'Chairman' : msg.sender
-      pendingUserParts.push(`[${label}]: ${msg.content}`)
+      const label = msg.sender === 'chairman' || msg.sender === 'vp' ? (msg.sender === 'vp' ? 'VP' : 'Chairman') : msg.sender
+      // Also embed any stored text attachments from historical messages
+      let msgContent = msg.content
+      if (msg.attachments) {
+        try {
+          const stored = JSON.parse(msg.attachments)
+          const storedText = stored.filter(a => a.text && !a.type?.startsWith('image/'))
+            .map(a => `[Attached file: ${a.name}]\n\`\`\`\n${a.text}\n\`\`\``)
+            .join('\n\n')
+          if (storedText) msgContent += '\n\n' + storedText
+        } catch (_) {}
+      }
+      pendingUserParts.push(`[${label}]: ${msgContent}`)
       if (isLastMsg) flushUser(true)
     }
   }
@@ -339,7 +378,7 @@ function buildThreadMessages(agentKey, history, currentAttachments = []) {
 }
 
 async function callAgentInThread(agent, threadName, members, history, recentDecisions = [], currentAttachments = [], vpContext = '') {
-  return enqueue(() => _withRetry(agent, () => _callAgentInThread(agent, threadName, members, history, recentDecisions, currentAttachments, vpContext)))
+  return enqueue(() => _withRetry(agent, () => _callAgentInThread(agent, threadName, members, history, recentDecisions, currentAttachments, vpContext)), agent)
 }
 
 async function _callAgentInThread(agent, threadName, members, history, recentDecisions, currentAttachments, vpContext) {

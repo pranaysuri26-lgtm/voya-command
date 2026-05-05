@@ -8,24 +8,31 @@ const AGENT_COLORS = {
   CFO: '#34d399', COO: '#fbbf24', FORGE: '#00BCD4',
 }
 
-// Render message text with @Chairman and @VP highlighted as pills
+const MENTION_RE     = /(@Chairman|@VP|@COO|@CPO|@CMO|@CTO|@CFO|@FORGE)/g
+const MENTION_RE_TEST = /(@Chairman|@VP|@COO|@CPO|@CMO|@CTO|@CFO|@FORGE)/
+const MENTION_COLORS = {
+  '@Chairman': { bg: '#4f46e522', color: '#818cf8' },
+  '@VP':       { bg: '#94A3B822', color: '#94A3B8' },
+  '@COO':      { bg: '#fbbf2422', color: '#fbbf24' },
+  '@CPO':      { bg: '#818cf822', color: '#818cf8' },
+  '@CMO':      { bg: '#f472b622', color: '#f472b6' },
+  '@CTO':      { bg: '#22d3ee22', color: '#22d3ee' },
+  '@CFO':      { bg: '#34d39922', color: '#34d399' },
+  '@FORGE':    { bg: '#00BCD422', color: '#00BCD4' },
+}
+
+// Render message text with all @mentions highlighted as pills
 function renderWithMentions(text) {
   if (!text) return text
-  const parts = text.split(/(@Chairman|@VP)/g)
+  const parts = text.split(MENTION_RE)
   return parts.map((part, i) => {
-    if (part === '@Chairman') return (
+    const style = MENTION_COLORS[part]
+    if (style) return (
       <span key={i} style={{
         display: 'inline-block', padding: '0 6px', borderRadius: 4,
-        background: '#4f46e522', color: '#818cf8',
+        background: style.bg, color: style.color,
         fontWeight: 700, fontSize: '0.95em',
-      }}>@Chairman</span>
-    )
-    if (part === '@VP') return (
-      <span key={i} style={{
-        display: 'inline-block', padding: '0 6px', borderRadius: 4,
-        background: '#94A3B822', color: '#94A3B8',
-        fontWeight: 700, fontSize: '0.95em',
-      }}>@VP</span>
+      }}>{part}</span>
     )
     return part
   })
@@ -113,7 +120,7 @@ function ThreadMessage({ msg, localFiles, vpName = 'VP' }) {
           style={{ userSelect: 'text', cursor: 'text' }}
           onContextMenu={handleContextMenu}
         >
-          {/(@Chairman|@VP)/.test(cleanContent || msg.content)
+          {MENTION_RE_TEST.test(cleanContent || msg.content)
             ? <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{renderWithMentions(cleanContent || msg.content)}</p>
             : <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleanContent || msg.content}</ReactMarkdown>
           }
@@ -215,6 +222,8 @@ async function readFile(file) {
 
 const ACCEPTED = '.png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.ts,.tsx,.js,.jsx,.json,.css,.html'
 
+const ALL_MENTIONABLE = ['COO', 'CPO', 'CMO', 'CTO', 'CFO', 'FORGE', 'Chairman', 'VP']
+
 export default function ThreadPanel({ threadId, onNewApprovals, onDelete, currentRole = 'chairman', vpActing = false, vpName = 'VP' }) {
   const [thread, setThread] = useState(null)
   const [messages, setMessages] = useState([])
@@ -223,6 +232,8 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
   const [sending, setSending] = useState(false)
   const [pendingFiles, setPendingFiles] = useState([])
   const [isDragOver, setIsDragOver] = useState(false)
+  const [mentionQuery, setMentionQuery] = useState(null)   // null or string being typed after @
+  const [mentionIndex, setMentionIndex] = useState(0)
   const bottomRef = useRef(null)
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -308,6 +319,7 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
 
     setSending(true)
     setInput('')
+    setMentionQuery(null)
     const filesToSend = [...pendingFiles]
     setPendingFiles([])
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
@@ -332,14 +344,66 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
     setSending(false)
   }
 
+  // Compute which members of this thread are mentionable (AI agents + humans)
+  const threadMentionable = thread
+    ? ALL_MENTIONABLE.filter(m => {
+        const upper = m.toUpperCase()
+        return thread.members.some(tm => tm.toUpperCase() === upper) || m === 'Chairman' || m === 'VP'
+      })
+    : ALL_MENTIONABLE
+
+  // Filtered mention suggestions
+  const mentionSuggestions = mentionQuery !== null
+    ? threadMentionable.filter(m => m.toLowerCase().startsWith(mentionQuery.toLowerCase()))
+    : []
+
+  function insertMention(name) {
+    const ta = textareaRef.current
+    if (!ta) return
+    const val = ta.value
+    const cursor = ta.selectionStart
+    // Find the @ that triggered the picker
+    const before = val.slice(0, cursor)
+    const atPos = before.lastIndexOf('@')
+    if (atPos === -1) return
+    const newVal = val.slice(0, atPos) + '@' + name + ' ' + val.slice(cursor)
+    setInput(newVal)
+    setMentionQuery(null)
+    setMentionIndex(0)
+    // Move cursor after inserted mention
+    requestAnimationFrame(() => {
+      ta.focus()
+      const pos = atPos + name.length + 2
+      ta.setSelectionRange(pos, pos)
+    })
+  }
+
   function handleKey(e) {
+    if (mentionSuggestions.length > 0) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setMentionIndex(i => (i + 1) % mentionSuggestions.length); return }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); setMentionIndex(i => (i - 1 + mentionSuggestions.length) % mentionSuggestions.length); return }
+      if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertMention(mentionSuggestions[mentionIndex]); return }
+      if (e.key === 'Escape') { setMentionQuery(null); return }
+    }
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
 
   function handleInputChange(e) {
-    setInput(e.target.value)
+    const val = e.target.value
+    setInput(val)
     e.target.style.height = 'auto'
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
+
+    // Detect @mention typing
+    const cursor = e.target.selectionStart
+    const before = val.slice(0, cursor)
+    const match = before.match(/@(\w*)$/)
+    if (match) {
+      setMentionQuery(match[1])
+      setMentionIndex(0)
+    } else {
+      setMentionQuery(null)
+    }
   }
 
   if (!thread) {
@@ -441,7 +505,7 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
         <div ref={bottomRef} />
       </div>
 
-      <div className="chat-input-area">
+      <div className="chat-input-area" style={{ position: 'relative' }}>
         <input
           ref={fileInputRef}
           type="file"
@@ -451,6 +515,45 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
           onChange={e => { handleFiles(e.target.files); e.target.value = '' }}
         />
         <AttachmentPreviews files={pendingFiles} onRemove={i => setPendingFiles(prev => prev.filter((_, idx) => idx !== i))} />
+
+        {/* @mention picker */}
+        {mentionSuggestions.length > 0 && (
+          <div style={{
+            position: 'absolute', bottom: '100%', left: 0, right: 0,
+            background: 'var(--bg-2)', border: '1px solid var(--border)',
+            borderRadius: 8, marginBottom: 4, overflow: 'hidden',
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.3)', zIndex: 50,
+          }}>
+            <div style={{ padding: '4px 10px 2px', fontSize: 9, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.06em' }}>
+              MENTION — @{mentionQuery || '…'}
+            </div>
+            {mentionSuggestions.map((name, idx) => {
+              const color = MENTION_COLORS[`@${name}`]?.color || 'var(--text-2)'
+              return (
+                <div
+                  key={name}
+                  onMouseDown={e => { e.preventDefault(); insertMention(name) }}
+                  style={{
+                    padding: '6px 12px', cursor: 'pointer', fontSize: 12,
+                    fontWeight: idx === mentionIndex ? 700 : 400,
+                    background: idx === mentionIndex ? 'var(--bg-3)' : 'transparent',
+                    color, display: 'flex', alignItems: 'center', gap: 8,
+                  }}
+                >
+                  <AgentAvatar agent={name.toUpperCase()} size={16} rounded={4} />
+                  <span>@{name}</span>
+                  {idx === mentionIndex && (
+                    <span style={{ marginLeft: 'auto', fontSize: 9, color: 'var(--text-3)' }}>↵ to insert</span>
+                  )}
+                </div>
+              )
+            })}
+            <div style={{ padding: '4px 10px 6px', fontSize: 9, color: 'var(--text-3)' }}>
+              ↑↓ navigate · ↵/Tab insert · Esc dismiss · only mentioned agents reply
+            </div>
+          </div>
+        )}
+
         <div className="chat-input-wrap">
           <button
             onClick={() => fileInputRef.current.click()}
@@ -467,7 +570,7 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
             ref={textareaRef}
             className="chat-input"
             rows={1}
-            placeholder={`Message ${thread.name}…`}
+            placeholder={`Message ${thread.name}… · type @ to mention`}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKey}
@@ -478,7 +581,7 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
           </button>
         </div>
         <div style={{ marginTop: 5, fontSize: 10, color: 'var(--text-3)' }}>
-          Enter to send · Shift+Enter for newline · 📎 to attach · drag & drop files
+          Enter · Shift+Enter newline · 📎 attach · @ to mention · @mention = only that agent replies
         </div>
       </div>
     </>

@@ -65,6 +65,57 @@ function selectParticipants(topic) {
   return ALL_AGENTS
 }
 
+// ─── Build memory context block for an agent ─────────────────────────────────
+async function buildMemoryContext(agent) {
+  const [agentDecisions, agentTasks, memory] = await Promise.all([
+    db.getAgentDecisionHistory(agent, 10),
+    db.getTasksForAgent(agent),
+    db.getAgentMemory(agent),
+  ])
+
+  let block = ''
+
+  if (memory?.summary) {
+    block += `\n\n## Your Memory Bank\n${memory.summary}`
+  }
+
+  if (agentDecisions.length > 0) {
+    block += `\n\n## Your Decision History (last ${agentDecisions.length})\n`
+    block += agentDecisions
+      .map(d => `- [${d.outcome.toUpperCase()}] ${d.title} (${new Date(d.decided_at).toDateString()}): ${d.description}`)
+      .join('\n')
+  }
+
+  if (agentTasks.length > 0) {
+    block += `\n\n## Your Open Tasks\n`
+    block += agentTasks
+      .map(t => {
+        const due = t.deadline ? ` — due ${t.deadline}` : ''
+        const status = t.status === 'in_progress' ? '[IN PROGRESS]' : '[TODO]'
+        return `${status} [${t.priority.toUpperCase()}] ${t.title}${due}`
+      })
+      .join('\n')
+    block += `\nUpdate task status by including [TASK: same title | same owner | same deadline | same priority] in your response — or mark done with "DONE: task title".`
+  }
+
+  return block
+}
+
+// ─── Parse and persist tasks from agent response ──────────────────────────────
+async function persistAgentTasks(agent, tasks) {
+  const created = []
+  for (const t of tasks || []) {
+    try {
+      const deadline = t.deadline && t.deadline !== 'null' ? t.deadline : null
+      const task = await db.createTask(t.title, null, t.owner || agent, t.priority, deadline, 'agent', null)
+      created.push(task)
+    } catch (e) {
+      console.error('[Tasks] Failed to create task:', e.message)
+    }
+  }
+  return created
+}
+
 // MODE 1 — direct message to exactly one agent
 async function sendMessage(agent, content, taskSource = null, attachments = [], senderRole = 'chairman', userId = null, overrideSource = null) {
   const userRole = senderRole === 'vp' ? 'vp' : 'chairman'
@@ -76,8 +127,11 @@ async function sendMessage(agent, content, taskSource = null, attachments = [], 
   const storedSource = overrideSource || (senderRole === 'vp' ? 'vp' : (taskSource || 'manual'))
   await db.addMessage(agent, 'chairman', enrichedContent, storedSource, userId)
 
-  const vpContext = await getCurrentVpContext(senderRole)
-  const response = await callAgent(agent, history, enrichedContent, recentDecisions, pendingApprovals, imageAttachments, {}, vpContext)
+  const [vpContext, memoryContext] = await Promise.all([
+    getCurrentVpContext(senderRole),
+    buildMemoryContext(agent),
+  ])
+  const response = await callAgent(agent, history, enrichedContent, recentDecisions, pendingApprovals, imageAttachments, {}, vpContext, memoryContext)
 
   const responseSource = taskSource === 'cto' ? 'cto_response' : 'manual'
   await db.addMessage(agent, 'agent', response.content, responseSource, userId)
@@ -108,9 +162,13 @@ async function sendMessage(agent, content, taskSource = null, attachments = [], 
     })
   }
 
+  // Persist any tasks the agent proposed
+  const createdTasks = await persistAgentTasks(agent, response.tasks)
+
   return {
     content: response.content,
     approvals: createdApprovals,
+    tasks: createdTasks,
     openDiscussion: response.openDiscussion || null,
   }
 }
@@ -292,36 +350,46 @@ async function _runOneAgent(agent, thread, history, recentDecisions, attachments
 }
 
 const MAX_CONTINUATION_ROUNDS = 2
-const AGENT_STAGGER_MS = 3000  // FIX 4: 3 s between agents in round 0
 
 // Human participants — never call AI for these
 const HUMAN_MEMBERS = new Set(['VP', 'CHAIRMAN', 'vp', 'chairman'])
 
 async function runThreadAgentResponses(threadId, currentAttachments = [], onUpdate) {
-  const recentDecisions = await db.getRecentDecisions(4) // FIX 2: was 6
+  const recentDecisions = await db.getRecentDecisions(4)
   const thread = await db.getThread(threadId)
   if (!thread) return
 
   // Only run AI responses for actual AI agents, skip human participants (VP, CHAIRMAN)
   const members = thread.members.filter(m => !HUMAN_MEMBERS.has(m))
-  let history = await db.getThreadMessages(threadId, 20) // FIX 2: was 100
+  let history = await db.getThreadMessages(threadId, 20)
 
-  // ── Round 0: stagger agents (FIX 4) ──────────────────────────────────────
-  const round0MsgIds = new Set()
-  for (let i = 0; i < members.length; i++) {
-    const agent = members[i]
-    if (i > 0) await _sleep(AGENT_STAGGER_MS)
-    try {
-      const msgId = await _runOneAgent(agent, thread, history, recentDecisions, currentAttachments, onUpdate)
-      if (msgId) {
-        round0MsgIds.add(msgId)
-        history = await db.getThreadMessages(threadId, 20)
-      }
-    } catch (err) {
-      onUpdate({ type: 'error', threadId, agent, content: `Error: ${err.message}` })
-    }
-  }
+  // ── Smart targeting: if message @mentions specific agents, only they respond ──
+  const lastHumanMsg = [...history].reverse().find(m => m.sender === 'chairman' || m.sender === 'vp')
+  const round0Targets = lastHumanMsg
+    ? (() => {
+        const mentioned = extractMentions(lastHumanMsg.content, members, lastHumanMsg.sender)
+        return mentioned.length > 0 ? mentioned : members
+      })()
+    : members
 
+  // ── Round 0: all targeted agents fire IN PARALLEL ────────────────────────
+  // Per-agent queues in claude.js ensure each agent serialises its own calls,
+  // but agents don't block each other — so all 5 respond concurrently.
+  const round0Results = await Promise.allSettled(
+    round0Targets.map(agent =>
+      _runOneAgent(agent, thread, history, recentDecisions, currentAttachments, onUpdate)
+        .catch(err => { onUpdate({ type: 'error', threadId, agent, content: `Error: ${err.message}` }); return null })
+    )
+  )
+
+  const round0MsgIds = new Set(
+    round0Results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean)
+  )
+
+  // Refresh history once after all round-0 responses are in
+  if (round0MsgIds.size > 0) history = await db.getThreadMessages(threadId, 20)
+
+  // ── Continuation rounds: agents @mentioned in round-0 responses ──────────
   let prevRoundMsgIds = round0MsgIds
   for (let round = 0; round < MAX_CONTINUATION_ROUNDS; round++) {
     const mentioned = new Set()
@@ -332,25 +400,19 @@ async function runThreadAgentResponses(threadId, currentAttachments = [], onUpda
     }
     if (mentioned.size === 0) break
 
-    const thisRoundMsgIds = new Set()
     history = await db.getThreadMessages(threadId, 20)
+    const contResults = await Promise.allSettled(
+      [...mentioned].map(agent =>
+        _runOneAgent(agent, thread, history, recentDecisions, [], onUpdate)
+          .catch(err => { onUpdate({ type: 'error', threadId, agent, content: `Error: ${err.message}` }); return null })
+      )
+    )
 
-    const mentionedArr = [...mentioned]
-    for (let i = 0; i < mentionedArr.length; i++) {
-      const agent = mentionedArr[i]
-      if (i > 0) await _sleep(AGENT_STAGGER_MS)
-      try {
-        const msgId = await _runOneAgent(agent, thread, history, recentDecisions, [], onUpdate)
-        if (msgId) {
-          thisRoundMsgIds.add(msgId)
-          history = await db.getThreadMessages(threadId, 20)
-        }
-      } catch (err) {
-        onUpdate({ type: 'error', threadId, agent, content: `Error: ${err.message}` })
-      }
-    }
-
+    const thisRoundMsgIds = new Set(
+      contResults.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean)
+    )
     prevRoundMsgIds = thisRoundMsgIds
+    if (thisRoundMsgIds.size > 0) history = await db.getThreadMessages(threadId, 20)
     if (thisRoundMsgIds.size === 0) break
   }
 
@@ -420,4 +482,6 @@ module.exports = {
   buildReturnSummary,
   buildVpContext,
   setHighActivityCallback,
+  getCurrentVpContext,
+  buildMemoryContext,
 }

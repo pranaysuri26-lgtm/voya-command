@@ -58,7 +58,9 @@ router.post('/:id/messages', requireAuth, async (req, res) => {
     if (!content) return res.status(400).json({ error: 'content required' })
 
     const sender = senderRole === 'vp' ? 'vp' : 'chairman'
-    const msgId = await db.addThreadMessage(threadId, sender, content)
+    // Store attachment metadata (strip large base64/text so DB stays small; keep name/type/size)
+    const attMeta = attachments.map(a => ({ name: a.name, type: a.type, size: a.size }))
+    const msgId = await db.addThreadMessage(threadId, sender, content, attMeta.length ? attMeta : null)
 
     // Broadcast new human message first
     broadcast.broadcast('thread-update', {

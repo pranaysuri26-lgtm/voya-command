@@ -35,6 +35,8 @@ function MemberDots({ members, max = 4 }) {
 }
 
 export default function Sidebar({
+  onSelectTasks,
+  onSelectBrief,
   activeView,
   selectedAgent,
   selectedThread,
@@ -202,6 +204,20 @@ export default function Sidebar({
       <div className="sidebar-divider" />
 
       <div style={{ paddingBottom: 4 }}>
+        <div
+          className={`sidebar-item ${activeView === 'brief' ? 'active' : ''}`}
+          onClick={onSelectBrief}
+        >
+          <span style={{ color: 'var(--text-3)', fontSize: 13 }}>☀</span>
+          <div className="sidebar-item-label">Morning Brief</div>
+        </div>
+        <div
+          className={`sidebar-item ${activeView === 'tasks' ? 'active' : ''}`}
+          onClick={onSelectTasks}
+        >
+          <span style={{ color: 'var(--text-3)', fontSize: 13 }}>☑</span>
+          <div className="sidebar-item-label">Tasks</div>
+        </div>
         <div
           className={`sidebar-item ${activeView === 'decisions' ? 'active' : ''}`}
           onClick={onSelectDecisions}

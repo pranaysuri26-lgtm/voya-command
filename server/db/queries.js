@@ -331,6 +331,88 @@ async function getThreadsSince(since) {
   return rows
 }
 
+// ─── Tasks ────────────────────────────────────────────────────────────────────
+
+async function createTask(title, description, owner, priority, deadline, sourceType, sourceId) {
+  const { rows } = await pool.query(
+    `INSERT INTO tasks (title,description,owner,priority,deadline,source_type,source_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+    [title, description || null, owner || 'team', priority || 'medium', deadline || null, sourceType || 'manual', sourceId || null]
+  )
+  return rows[0]
+}
+
+async function getTasks(status = null, owner = null) {
+  let q = 'SELECT * FROM tasks WHERE status != $1'
+  const params = ['cancelled']
+  if (status) { q += ` AND status=$${params.length + 1}`; params.push(status) }
+  if (owner)  { q += ` AND owner=$${params.length + 1}`;  params.push(owner) }
+  q += ' ORDER BY CASE priority WHEN \'urgent\' THEN 0 WHEN \'high\' THEN 1 WHEN \'medium\' THEN 2 ELSE 3 END, created_at DESC'
+  const { rows } = await pool.query(q, params)
+  return rows
+}
+
+async function getTasksForAgent(owner) {
+  const { rows } = await pool.query(
+    `SELECT * FROM tasks WHERE owner=$1 AND status NOT IN ('done','cancelled')
+     ORDER BY CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, deadline ASC NULLS LAST`,
+    [owner]
+  )
+  return rows
+}
+
+async function getOverdueTasks() {
+  const { rows } = await pool.query(
+    `SELECT * FROM tasks WHERE deadline < CURRENT_DATE AND status NOT IN ('done','cancelled')
+     ORDER BY deadline ASC`
+  )
+  return rows
+}
+
+async function updateTask(id, fields) {
+  const allowed = ['title','description','owner','status','priority','deadline','notes']
+  const sets = []
+  const vals = []
+  for (const [k, v] of Object.entries(fields)) {
+    if (allowed.includes(k)) { sets.push(`${k}=$${vals.length + 1}`); vals.push(v) }
+  }
+  if (sets.length === 0) return null
+  sets.push(`updated_at=NOW()`)
+  vals.push(id)
+  const { rows } = await pool.query(
+    `UPDATE tasks SET ${sets.join(',')} WHERE id=$${vals.length} RETURNING *`,
+    vals
+  )
+  return rows[0]
+}
+
+async function deleteTask(id) {
+  await pool.query("UPDATE tasks SET status='cancelled' WHERE id=$1", [id])
+}
+
+// ─── Agent Memory ─────────────────────────────────────────────────────────────
+
+async function getAgentMemory(agent) {
+  const { rows } = await pool.query('SELECT * FROM agent_memories WHERE agent=$1', [agent])
+  return rows[0] || null
+}
+
+async function setAgentMemory(agent, summary) {
+  await pool.query(
+    `INSERT INTO agent_memories (agent,summary,updated_at) VALUES ($1,$2,NOW())
+     ON CONFLICT (agent) DO UPDATE SET summary=$2, updated_at=NOW()`,
+    [agent, summary]
+  )
+}
+
+async function getAgentDecisionHistory(agent, limit = 12) {
+  const { rows } = await pool.query(
+    'SELECT * FROM decisions WHERE agent=$1 ORDER BY decided_at DESC LIMIT $2',
+    [agent, limit]
+  )
+  return rows
+}
+
 // ─── App State ────────────────────────────────────────────────────────────────
 
 async function getState(key) {
@@ -454,6 +536,8 @@ module.exports = {
   addMessage, getConversation,
   createApproval, getApprovals, getPendingCount, resolveApproval,
   getDecisions, getRecentDecisions, getVpActingDecisions,
+  createTask, getTasks, getTasksForAgent, getOverdueTasks, updateTask, deleteTask,
+  getAgentMemory, setAgentMemory, getAgentDecisionHistory,
   createDiscussion, getDiscussionParticipants, setDiscussionRecommendation,
   getDiscussions, getDiscussion, getDiscussionMessages, addDiscussionMessage, closeDiscussion,
   getOversightMessages,

@@ -109,6 +109,7 @@ const CHANNEL_MAP = {
   'direct-message':           'direct-message',
   'ws-connected':             'ws-connected',
   'ws-disconnected':          'ws-disconnected',
+  'task-update':              'task-update',
 }
 
 // ─── Install ──────────────────────────────────────────────────────────────────
@@ -171,6 +172,20 @@ export function installWebAPI() {
     // ── Decisions ─────────────────────────────────────────────────────────────
     getDecisions: (query) =>
       GET(query ? `/decisions?q=${encodeURIComponent(query)}` : '/decisions'),
+
+    // ── Tasks ─────────────────────────────────────────────────────────────────
+    getTasks:    (status, owner) => {
+      const p = new URLSearchParams()
+      if (status) p.set('status', status)
+      if (owner)  p.set('owner', owner)
+      return GET(`/tasks${p.toString() ? '?' + p.toString() : ''}`)
+    },
+    createTask:  (data)     => POST('/tasks', data),
+    updateTask:  (id, data) => fetch(`/tasks/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_token}` }, body: JSON.stringify(data) }).then(r => r.json()),
+    deleteTask:  (id)       => fetch(`/tasks/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${_token}` } }).then(r => r.json()),
+
+    // ── Daily Brief ───────────────────────────────────────────────────────────
+    getDailyBrief: () => GET('/briefing/daily'),
 
     // ── Oversight ─────────────────────────────────────────────────────────────
     getOversightMessages: (agentFilter = null, limit = 200) => {
