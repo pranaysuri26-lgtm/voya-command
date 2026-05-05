@@ -1,3 +1,6 @@
+// Must be set before any pg/TLS code loads — bypasses cert chain verification
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
 require('dotenv').config()
 const express = require('express')
 const http = require('http')
