@@ -10,6 +10,14 @@ function init(server) {
     clients.add(ws)
     console.log(`[WS] Client connected — total: ${clients.size}`)
 
+    // Handle client keepalive pings
+    ws.on('message', (data) => {
+      try {
+        const msg = JSON.parse(data)
+        if (msg.type === 'ping') ws.send(JSON.stringify({ type: 'pong' }))
+      } catch { /* ignore */ }
+    })
+
     ws.on('close', () => {
       clients.delete(ws)
       console.log(`[WS] Client disconnected — total: ${clients.size}`)

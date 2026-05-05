@@ -36,6 +36,8 @@ const PATCH  = (path, body)  => api('PATCH',  path, body)
 const DELETE = (path)        => api('DELETE', path)
 
 // ─── WebSocket ────────────────────────────────────────────────────────────────
+let _keepaliveTimer = null
+
 function connectWS() {
   try {
     _ws = new WebSocket(_getWsUrl())
@@ -44,18 +46,29 @@ function connectWS() {
       _wsReady = true
       for (const fn of _wsQueue) fn()
       _wsQueue = []
+
+      // Send a keepalive ping every 20s to prevent Railway proxy from
+      // closing idle WebSocket connections
+      if (_keepaliveTimer) clearInterval(_keepaliveTimer)
+      _keepaliveTimer = setInterval(() => {
+        if (_ws && _ws.readyState === WebSocket.OPEN) {
+          _ws.send(JSON.stringify({ type: 'ping' }))
+        }
+      }, 20_000)
     }
 
     _ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data)
         const { type, ...payload } = msg
+        if (type === 'pong') return // ignore server pong replies
         for (const cb of (_wsListeners[type] || [])) cb(payload)
       } catch { /* ignore malformed */ }
     }
 
     _ws.onclose = () => {
       _wsReady = false
+      if (_keepaliveTimer) { clearInterval(_keepaliveTimer); _keepaliveTimer = null }
       if (_token) setTimeout(connectWS, 3000)
     }
 
