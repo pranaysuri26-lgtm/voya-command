@@ -1,12 +1,15 @@
 const { Pool } = require('pg')
 
-// pg v8+ parses sslmode from the connection string and treats 'require' as
-// 'verify-full', overriding pool-level ssl options. Set this before the Pool
-// is created so Node's TLS stack skips certificate chain verification.
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+// pg-connection-string parses sslmode=require from the URL and maps it to
+// verify-full, which enforces cert chain validation. Strip it from the URL
+// and set ssl explicitly so rejectUnauthorized:false actually takes effect.
+const connectionString = (process.env.DATABASE_URL || '')
+  .replace(/([?&])sslmode=[^&]*/g, '$1')
+  .replace(/[?&]$/, '')
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
+  ssl: { rejectUnauthorized: false },
 })
 
 module.exports = pool
