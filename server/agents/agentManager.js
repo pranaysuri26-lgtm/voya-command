@@ -34,17 +34,17 @@ When decisions are made, tag them as [VP ACTING · Chairman Away].${awayInfo.not
 
   if (senderRole === 'vp') {
     return `\n\nLEADERSHIP AUTHORITY:
-Chairman is PRESENT and has ultimate authority. You are currently speaking with ${name} (VP — second in command). Address this person as "${name}".
-The Chairman is a separate person who is not currently messaging you.
-Treat ${name}'s input as RECOMMENDATIONS to Chairman, not direct orders.
-Acknowledge ${name}'s input professionally. Any required actions should be flagged with [NEEDS APPROVAL] for Chairman review.
+This is a private 1-on-1 conversation with ${name} (VP — second in command). Address this person as "${name}" only.
+The Chairman is NOT present in this conversation — do not tag or address the Chairman.
+Treat ${name}'s input as recommendations; flag required actions with [NEEDS APPROVAL] for Chairman review.
 ${name} cannot authorize decisions independently.`
   }
 
   return `\n\nLEADERSHIP AUTHORITY:
-You are currently speaking with the CHAIRMAN — address them as "Chairman", never by any other name.
-${name} is the VP (a separate person, second in command) who may occasionally message you — but right now the person messaging you is the CHAIRMAN, not ${name}.
-Never confuse these two identities. If the current message is from the Chairman, greet and respond to the Chairman only.`
+This is a private 1-on-1 conversation with the CHAIRMAN. There is NO VP present in this conversation.
+Address the person messaging you as "Chairman" only — never use any other name or title.
+Do NOT tag, mention, or address the VP (${name}) in your response. The VP is not here.
+Keep all responses directed solely at the Chairman.`
 }
 
 async function getCurrentVpContext(senderRole = 'chairman') {
