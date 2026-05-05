@@ -93,11 +93,11 @@ export default function NewThreadModal({ onClose, onCreate, vpProfile = null, cu
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
 
-            {/* VP — human participant (only show if not VP themselves, so Chairman sees it) */}
-            {currentRole !== 'vp' && vpProfile && (() => {
+            {/* VP — human participant (only show for Chairman, not VP themselves) */}
+            {currentRole !== 'vp' && (() => {
               const vpKey = 'VP'
               const vpColor = '#94A3B8'
-              const vpLabel = vpProfile.name || 'VP'
+              const vpLabel = vpProfile?.name || 'VP'
               return (
                 <div
                   key="VP"
@@ -132,7 +132,7 @@ export default function NewThreadModal({ onClose, onCreate, vpProfile = null, cu
             })()}
 
             {/* Divider between human and AI agents */}
-            {currentRole !== 'vp' && vpProfile && (
+            {currentRole !== 'vp' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0' }}>
                 <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
                 <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 600 }}>AI AGENTS</span>
