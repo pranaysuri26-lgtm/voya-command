@@ -29,6 +29,16 @@ router.post('/', requireAuth, async (req, res) => {
   }
 })
 
+// GET /threads/archived — list archived threads  ← must be before /:id
+router.get('/archived', requireAuth, async (req, res) => {
+  try {
+    const threads = await db.getArchivedThreads()
+    res.json(threads)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // GET /threads/:id
 router.get('/:id', requireAuth, async (req, res) => {
   try {
@@ -97,16 +107,6 @@ router.patch('/:id/pin', requireAuth, async (req, res) => {
     await db.setThreadPinned(req.params.id, pinned)
     broadcast.broadcast('threads-updated', {})
     res.json({ ok: true })
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
-
-// GET /threads/archived — list archived threads
-router.get('/archived', requireAuth, async (req, res) => {
-  try {
-    const threads = await db.getArchivedThreads()
-    res.json(threads)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
