@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Voya</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1614;
+  --ink-soft:#4a4340;
+  --paper:#faf7f2;
+  --clay:#b85c37;
+  --clay-muted:#c47055;
+  --line:rgba(26,22,20,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  font-size:15px;line-height:1.6;
+  overflow-x:hidden;
+}
+::selection{background:var(--clay);color:var(--paper)}
+a{color:inherit;text-decoration:none}
+
+/* ---- ABOVE FOLD (full viewport) ---- */
+.above{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  padding:28px 48px;
+  border-bottom:1px solid var(--line);
+}
+@media(max-width:600px){.above{padding:22px 24px}}
+
+/* Mini nav */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{
+  font-family:'Libre Baskerville',serif;
+  font-size:22px;letter-spacing:.01em;
+}
+.topbar-right{
+  display:flex;align-items:center;gap:28px;
+  font-size:13px;color:var(--ink-soft);
+}
+.topbar-right a:hover{color:var(--clay);transition:color .2s}
+.signin{opacity:.7}
+
+/* Hero text — center of gravity */
+.hero-center{
+  flex:1;display:flex;flex-direction:column;
+  justify-content:center;padding:48px 0;
+  max-width:900px;
+}
+.hero-pre{
+  font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--clay);margin-bottom:28px;
+  font-weight:500;
+  display:flex;align-items:center;gap:12px;
+}
+.hero-pre::before{content:"";width:24px;height:1px;background:var(--clay)}
+.hero-h1{
+  font-family:'Libre Baskerville',serif;
+  font-size:clamp(44px,7.5vw,108px);
+  font-weight:400;line-height:.95;letter-spacing:-.02em;
+  margin-bottom:36px;
+}
+.hero-h1 em{font-style:italic;color:var(--clay)}
+.hero-tagline{
+  font-size:clamp(17px,2.2vw,22px);
+  font-weight:300;color:var(--ink-soft);
+  max-width:56ch;line-height:1.55;
+  margin-bottom:44px;
+}
+.hero-tagline strong{font-weight:500;color:var(--ink)}
+
+/* CTA */
+.cta-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.btn-main{
+  font-size:13px;font-weight:500;letter-spacing:.08em;
+  background:var(--ink);color:var(--paper);
+  padding:16px 36px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:10px;
+  transition:background .25s,transform .3s cubic-bezier(.2,.8,.2,1);
+}
+.btn-main:hover{background:var(--clay);transform:translateY(-2px)}
+.btn-link{
+  font-size:13px;color:var(--ink-soft);
+  border-bottom:1px solid var(--line);padding-bottom:2px;
+  transition:color .2s,border-color .2s;
+}
+.btn-link:hover{color:var(--clay);border-color:var(--clay)}
+.hero-note{
+  margin-top:18px;font-size:12px;color:var(--ink-soft);opacity:.7;
+  letter-spacing:.04em;
+}
+
+/* Bottom bar */
+.hero-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  padding-top:24px;border-top:1px solid var(--line);
+  flex-wrap:wrap;gap:14px;
+}
+.hero-foot-left{
+  font-size:12px;color:var(--ink-soft);
+  display:flex;align-items:center;gap:24px;
+}
+.pulse{
+  display:inline-flex;align-items:center;gap:8px;font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;
+}
+.pulse::before{
+  content:"";width:6px;height:6px;border-radius:50%;background:var(--clay);
+  animation:pls 2.2s ease-in-out infinite;
+}
+@keyframes pls{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-foot-right{
+  font-size:12px;color:var(--ink-soft);opacity:.6;
+}
+
+/* ---- BELOW FOLD ---- */
+section{padding:88px 48px}
+@media(max-width:600px){section{padding:64px 24px}}
+
+/* Intro line */
+.intro{
+  border-bottom:1px solid var(--line);
+}
+.intro-inner{
+  max-width:760px;margin:0 auto;text-align:center;
+  padding-bottom:88px;
+}
+.intro-inner p{
+  font-family:'Libre Baskerville',serif;
+  font-size:clamp(22px,3.5vw,38px);
+  font-weight:400;line-height:1.35;letter-spacing:-.01em;
+  color:var(--ink-soft);
+}
+.intro-inner p em{font-style:italic;color:var(--ink)}
+.intro-inner p strong{font-weight:400;color:var(--ink)}
+
+/* How it works — numbered list */
+.how{border-bottom:1px solid var(--line)}
+.how-inner{max-width:900px;margin:0 auto}
+.how-label{
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--clay);margin-bottom:56px;font-weight:500;
+  display:flex;align-items:center;gap:12px;
+}
+.how-label::before{content:"";width:20px;height:1px;background:var(--clay)}
+.how-items{display:flex;flex-direction:column;gap:0}
+.how-item{
+  display:grid;grid-template-columns:64px 1fr;gap:32px;
+  padding:40px 0;border-bottom:1px solid var(--line);
+  align-items:baseline;
+}
+.how-item:last-child{border-bottom:none}
+.how-n{
+  font-family:'Libre Baskerville',serif;font-style:italic;
+  font-size:38px;color:rgba(184,92,55,.35);line-height:1;
+}
+.how-item h3{
+  font-family:'Libre Baskerville',serif;
+  font-size:clamp(20px,2.5vw,28px);font-weight:400;letter-spacing:-.01em;
+  margin-bottom:12px;
+}
+.how-item p{font-size:14px;line-height:1.75;color:var(--ink-soft);max-width:54ch}
+@media(max-width:600px){.how-item{grid-template-columns:1fr}.how-n{font-size:28px;margin-bottom:10px}}
+
+/* Destination reveal */
+.reveal-section{border-bottom:1px solid var(--line);background:#f4ede0}
+.reveal-inner{max-width:900px;margin:0 auto}
+.reveal-label{
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--clay);margin-bottom:48px;font-weight:500;
+  display:flex;align-items:center;gap:12px;
+}
+.reveal-label::before{content:"";width:20px;height:1px;background:var(--clay)}
+.dest-reveal{
+  border:1px solid rgba(26,22,20,.12);
+  border-radius:6px;background:var(--paper);
+  overflow:hidden;
+}
+.dest-reveal .dest-head{
+  padding:36px 40px;border-bottom:1px solid var(--line);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;
+}
+.dest-reveal .dest-name{
+  font-family:'Libre Baskerville',serif;
+  font-size:clamp(32px,5vw,56px);font-weight:400;letter-spacing:-.02em;line-height:.95;
+}
+.dest-reveal .dest-name em{font-style:italic;color:var(--clay)}
+.dest-reveal .dest-meta{
+  font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-soft);margin-top:8px;
+}
+.dest-reveal .match-badge{
+  border:1px solid var(--line);border-radius:4px;
+  padding:12px 18px;text-align:right;flex-shrink:0;
+}
+.dest-reveal .match-badge .num{
+  font-family:'Libre Baskerville',serif;font-size:36px;color:var(--clay);line-height:1;
+}
+.dest-reveal .match-badge .lbl{
+  font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);margin-top:4px;
+}
+.dest-reveal .dest-reason{
+  padding:32px 40px;border-bottom:1px solid var(--line);
+  font-family:'Libre Baskerville',serif;font-style:italic;
+  font-size:clamp(17px,2vw,21px);line-height:1.5;color:var(--ink-soft);
+}
+.dest-reveal .dest-tags{
+  padding:20px 40px;display:flex;gap:10px;flex-wrap:wrap;
+}
+.dest-reveal .tag{
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid var(--line);padding:6px 12px;border-radius:2px;
+  color:var(--ink-soft);
+}
+.dest-reveal .tag.highlight{border-color:var(--clay);color:var(--clay);background:rgba(184,92,55,.06)}
+
+/* Pricing */
+.pricing{border-bottom:1px solid var(--line)}
+.pricing-inner{max-width:900px;margin:0 auto}
+.pricing-label{
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--clay);margin-bottom:56px;font-weight:500;
+  display:flex;align-items:center;gap:12px;
+}
+.pricing-label::before{content:"";width:20px;height:1px;background:var(--clay)}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+@media(max-width:640px){.plans{grid-template-columns:1fr}}
+.plan{
+  background:var(--paper);padding:48px 40px;
+  transition:background .3s;
+}
+.plan.pro{background:#1a1614;color:var(--paper)}
+.plan .plan-name{
+  font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-soft);margin-bottom:20px;
+}
+.plan.pro .plan-name{color:rgba(250,247,242,.45)}
+.plan .plan-price{
+  font-family:'Libre Baskerville',serif;
+  font-size:72px;font-weight:400;letter-spacing:-.04em;
+  line-height:.88;margin-bottom:8px;
+}
+.plan.pro .plan-price{color:var(--clay-muted)}
+.plan .plan-period{
+  font-size:12px;color:var(--ink-soft);margin-bottom:32px;letter-spacing:.06em;
+}
+.plan.pro .plan-period{color:rgba(250,247,242,.45)}
+.plan ul{list-style:none;margin-bottom:40px;display:flex;flex-direction:column;gap:12px}
+.plan li{
+  font-size:13px;color:var(--ink-soft);padding-left:18px;position:relative;line-height:1.45;
+}
+.plan.pro li{color:rgba(250,247,242,.65)}
+.plan li::before{content:"·";position:absolute;left:0;color:var(--clay)}
+.plan li.off{opacity:.3;text-decoration:line-through}
+.plan .plan-cta{
+  font-size:13px;font-weight:500;letter-spacing:.06em;
+  padding:14px 28px;border-radius:999px;
+  display:inline-block;transition:background .25s,transform .3s;
+}
+.plan .plan-cta:hover{transform:translateY(-2px)}
+.plan.free .plan-cta{background:var(--ink);color:var(--paper)}
+.plan.free .plan-cta:hover{background:var(--clay)}
+.plan.pro .plan-cta{background:var(--clay-muted);color:var(--paper)}
+.plan.pro .plan-cta:hover{background:var(--paper);color:var(--ink)}
+
+/* Final CTA */
+.final-cta{text-align:center;border-bottom:1px solid var(--line)}
+.final-cta-inner{max-width:680px;margin:0 auto}
+.final-cta h2{
+  font-family:'Libre Baskerville',serif;
+  font-size:clamp(32px,5vw,64px);font-weight:400;letter-spacing:-.02em;
+  line-height:1.05;margin-bottom:24px;
+}
+.final-cta h2 em{font-style:italic;color:var(--clay)}
+.final-cta p{font-size:15px;color:var(--ink-soft);margin-bottom:36px;line-height:1.65}
+
+/* Footer */
+footer{
+  padding:28px 48px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+}
+.footer-logo{
+  font-family:'Libre Baskerville',serif;font-size:18px;
+}
+.footer-meta{font-size:12px;color:var(--ink-soft);opacity:.6;letter-spacing:.04em}
+
+/* Scroll reveal */
+.on-scroll{opacity:0;transform:translateY(18px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.8,.2,1)}
+.on-scroll.vis{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- ABOVE FOLD -->
+<div class="above">
+  <div class="topbar">
+    <div class="logo">Voya</div>
+    <div class="topbar-right">
+      <a href="#how">Method</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#" class="signin">Sign in</a>
+    </div>
+  </div>
+
+  <div class="hero-center">
+    <div class="hero-pre">AI Travel Discovery</div>
+    <h1 class="hero-h1">
+      You'll know it<br/>
+      when you find<br/>
+      <em>the right place.</em>
+    </h1>
+    <p class="hero-tagline">
+      Voya is an AI travel curator for <strong>the places most apps will never show you.</strong>
+      Answer five questions. We find the destination that fits you — not the algorithm.
+    </p>
+    <div class="cta-row">
+      <a href="#final-cta" class="btn-main">Start Exploring →</a>
+      <a href="#how" class="btn-link">See how it works</a>
+    </div>
+    <p class="hero-note">First 3 recommendations free · No card required · getvoya.net</p>
+  </div>
+
+  <div class="hero-foot">
+    <div class="hero-foot-left">
+      <span class="pulse">Available now</span>
+      <span>iOS &amp; Android</span>
+    </div>
+    <div class="hero-foot-right">getvoya.net · © 2026</div>
+  </div>
+</div>
+
+<!-- INTRO -->
+<section class="intro">
+  <div class="intro-inner on-scroll">
+    <p>
+      Most travel apps show you the same twelve cities.<br/>
+      <em>Voya finds the thirteenth.</em><br/>
+      The one that fits how you actually travel —<br/>
+      your pace, your budget, <strong>your kind of beautiful.</strong>
+    </p>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="how-inner">
+    <div class="how-label">The Method</div>
+    <div class="how-items">
+      <div class="how-item on-scroll">
+        <div class="how-n">i.</div>
+        <div>
+          <h3>Five honest questions</h3>
+          <p>Are you traveling alone or together? Fast or slow? Tasting menus or street food? Five questions that treat you like a person, not a demographic.</p>
+        </div>
+      </div>
+      <div class="how-item on-scroll">
+        <div class="how-n">ii.</div>
+        <div>
+          <h3>A destination with a reason</h3>
+          <p>Not a star rating. A paragraph. Voya explains exactly why this place fits you — the season, the pace, what to skip, what to taste, when the light is best.</p>
+        </div>
+      </div>
+      <div class="how-item on-scroll">
+        <div class="how-n">iii.</div>
+        <div>
+          <h3>Book where you trust</h3>
+          <p>Voya links directly to Booking.com and Skyscanner. No middleman markup. We just found the place — the booking is yours to own.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DESTINATION REVEAL -->
+<section class="reveal-section">
+  <div class="reveal-inner">
+    <div class="reveal-label">A sample match</div>
+    <div class="dest-reveal on-scroll">
+      <div class="dest-head">
+        <div>
+          <div class="dest-name">Setenil de<br/><em>las Bodegas</em></div>
+          <div class="dest-meta">Andalucía, Spain · Quieter than Granada</div>
+        </div>
+        <div class="match-badge">
+          <div class="num">94%</div>
+          <div class="lbl">Your match</div>
+        </div>
+      </div>
+      <div class="dest-reason">
+        "A white village where the houses are built into a gorge — the cliff face is the ceiling. Locals have been eating and sleeping inside the rock for 700 years. Come in October when the tourists have gone and the almonds are in season."
+      </div>
+      <div class="dest-tags">
+        <span class="tag">Low crowds</span>
+        <span class="tag">Best: October–November</span>
+        <span class="tag highlight">Hidden gem · Voya verified</span>
+        <span class="tag">Drive from Ronda: 30 min</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="pricing-inner">
+    <div class="pricing-label">Membership</div>
+    <div class="plans on-scroll">
+      <div class="plan free">
+        <div class="plan-name">Wanderer · Free</div>
+        <div class="plan-price">$0</div>
+        <div class="plan-period">No card required</div>
+        <ul>
+          <li>3 hidden gem recommendations</li>
+          <li>Full reasoning per destination</li>
+          <li>Direct booking links</li>
+          <li class="off">Best budget match</li>
+          <li class="off">Golden hour photo spots</li>
+          <li class="off">Card optimizer</li>
+        </ul>
+        <a href="#final-cta" class="plan-cta">Start free</a>
+      </div>
+      <div class="plan pro">
+        <div class="plan-name">Voya Pro · Full Atlas</div>
+        <div class="plan-price">$9</div>
+        <div class="plan-period">per month · cancel anytime</div>
+        <ul>
+          <li>Unlimited destination discovery</li>
+          <li>Best budget match unlocked</li>
+          <li>Golden hour photo spots &amp; timing</li>
+          <li>Card optimizer per booking</li>
+          <li>Solo &amp; couple modes</li>
+          <li>Deeper AI reasoning</li>
+        </ul>
+        <a href="#final-cta" class="plan-cta">Join Voya Pro</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta" id="final-cta">
+  <div class="final-cta-inner on-scroll">
+    <h2>Go where the<br/><em>algorithm forgot to look.</em></h2>
+    <p>First three destinations free, forever. No card, no catch.<br/>getvoya.net · iOS &amp; Android</p>
+    <a href="https://getvoya.net" class="btn-main">Start Exploring →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Voya</div>
+  <div class="footer-meta">Find places most apps will never show you · getvoya.net · Privacy · Terms</div>
+</footer>
+
+<script>
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('vis'); io.unobserve(e.target); } });
+}, {threshold:.1});
+document.querySelectorAll('.on-scroll').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

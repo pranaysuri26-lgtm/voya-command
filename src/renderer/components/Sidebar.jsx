@@ -38,6 +38,8 @@ function MemberDots({ members, max = 4 }) {
 export default function Sidebar({
   onSelectTasks,
   onSelectBrief,
+  onSelectForgeBuilds,
+  forgeBuildsUnread = false,
   activeView,
   selectedAgent,
   selectedThread,
@@ -275,6 +277,21 @@ export default function Sidebar({
         >
           <span style={{ color: 'var(--text-3)', fontSize: 13 }}>▤</span>
           <div className="sidebar-item-label">Decision Log</div>
+        </div>
+        <div
+          className={`sidebar-item ${activeView === 'forge-builds' ? 'active' : ''}`}
+          onClick={onSelectForgeBuilds}
+        >
+          <span style={{ color: forgeBuildsUnread ? '#00BCD4' : 'var(--text-3)', fontSize: 13 }}>🔨</span>
+          <div className="sidebar-item-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>Builds</span>
+            {forgeBuildsUnread && (
+              <span style={{
+                fontSize: 8, fontWeight: 800, background: '#00BCD4',
+                color: '#fff', borderRadius: 4, padding: '1px 4px', lineHeight: '12px',
+              }}>NEW</span>
+            )}
+          </div>
         </div>
       </div>
 

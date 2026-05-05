@@ -97,6 +97,8 @@ const OPEN_DISCUSSION_RE = /\[OPEN DISCUSSION:\s*([^|\]]+?)(?:\|([^\]]*))?\]/
 const RECOMMENDATION_RE  = /\[RECOMMENDATION READY\]/
 const CREATE_THREAD_RE   = /\[CREATE THREAD:\s*"([^"]+)"\s*\|\s*([^|]+)\|\s*([^\]]+)\]/i
 const TASK_RE            = /\[TASK:\s*([^|\]]+)\|([^|\]]+)(?:\|([^|\]]+))?(?:\|([^\]]+))?\]/g
+const BUILD_RE           = /\[BUILD:\s*([^\]]+)\]\s*```[a-z]*\n?([\s\S]*?)```\s*\[\/BUILD\]/g
+const BUILD_SUMMARY_RE   = /\[BUILD_SUMMARY:\s*([^\]]+)\]/
 
 function parseFlags(content) {
   const approvals = []
@@ -133,7 +135,21 @@ function parseFlags(content) {
     })
   }
 
-  return { approvals, openDiscussion, recommendationReady, createThread, tasks }
+  // Parse FORGE build blocks
+  const builds = []
+  const buildRe = new RegExp(BUILD_RE.source, 'g')
+  let bm
+  while ((bm = buildRe.exec(content)) !== null) {
+    const filename = bm[1].trim()
+    const fileContent = bm[2]
+    const ext = filename.split('.').pop().toLowerCase()
+    const langMap = { html: 'html', js: 'javascript', jsx: 'jsx', ts: 'typescript', tsx: 'tsx', css: 'css', json: 'json', md: 'markdown', py: 'python' }
+    builds.push({ filename, content: fileContent, language: langMap[ext] || ext })
+  }
+  const buildSummaryMatch = BUILD_SUMMARY_RE.exec(content)
+  const buildSummary = buildSummaryMatch ? buildSummaryMatch[1].trim() : null
+
+  return { approvals, openDiscussion, recommendationReady, createThread, tasks, builds, buildSummary }
 }
 
 // ─── Attachment helpers ───────────────────────────────────────────────────────

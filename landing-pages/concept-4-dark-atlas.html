@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Voya — The places light forgot to advertise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#0b0906;
+  --night-2:#111009;
+  --night-3:#1a1612;
+  --amber:#d4a847;
+  --amber-dim:#c4943a;
+  --ember:#c05a30;
+  --paper:#f0e8d8;
+  --mist:rgba(212,168,71,.12);
+  --rule:rgba(212,168,71,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--night);
+  color:var(--paper);
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;line-height:1.6;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(212,168,71,.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 80% 80%, rgba(192,90,48,.05) 0%, transparent 60%);
+}
+::selection{background:var(--amber);color:var(--night)}
+a{color:inherit;text-decoration:none}
+
+/* ---- NAV ---- */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:20px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--rule);
+  background:rgba(11,9,6,.8);
+  backdrop-filter:blur(20px);
+}
+.logo{
+  font-family:'Cormorant Garamond',serif;
+  font-size:28px;font-weight:300;letter-spacing:.04em;
+  color:var(--amber);
+}
+.nav-links{display:flex;gap:32px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(240,232,216,.45)}
+.nav-links a:hover{color:var(--amber);transition:color .2s}
+.nav-cta{
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  border:1px solid var(--amber);color:var(--amber);
+  padding:10px 22px;border-radius:2px;
+  transition:background .25s,color .25s;
+}
+.nav-cta:hover{background:var(--amber);color:var(--night)}
+@media(max-width:700px){.nav-links{display:none}.nav{padding:18px 24px}}
+
+/* ---- HERO ---- */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  justify-content:flex-end;padding:0 40px 80px;
+  position:relative;overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 30% 40%, rgba(192,90,48,.12), transparent 60%),
+    radial-gradient(ellipse 60% 80% at 70% 60%, rgba(212,168,71,.08), transparent 60%),
+    linear-gradient(180deg,#0b0906 0%,#141008 40%,#0d0a07 100%);
+}
+/* CSS star field */
+.hero-bg::before{
+  content:"";position:absolute;inset:0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(212,168,71,.6) 0%,transparent 100%),
+    radial-gradient(1px 1px at 25% 8%, rgba(240,232,216,.4) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 15%, rgba(212,168,71,.5) 0%,transparent 100%),
+    radial-gradient(1px 1px at 55% 5%, rgba(240,232,216,.3) 0%,transparent 100%),
+    radial-gradient(1px 1px at 70% 25%, rgba(212,168,71,.4) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 82% 12%, rgba(240,232,216,.5) 0%,transparent 100%),
+    radial-gradient(1px 1px at 92% 18%, rgba(212,168,71,.6) 0%,transparent 100%),
+    radial-gradient(1px 1px at 15% 35%, rgba(240,232,216,.3) 0%,transparent 100%),
+    radial-gradient(1px 1px at 48% 30%, rgba(212,168,71,.4) 0%,transparent 100%),
+    radial-gradient(1px 1px at 63% 38%, rgba(240,232,216,.25) 0%,transparent 100%),
+    radial-gradient(1px 1px at 78% 42%, rgba(212,168,71,.35) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 5% 50%, rgba(240,232,216,.4) 0%,transparent 100%),
+    radial-gradient(1px 1px at 35% 55%, rgba(212,168,71,.3) 0%,transparent 100%),
+    radial-gradient(1px 1px at 88% 58%, rgba(240,232,216,.45) 0%,transparent 100%);
+}
+.hero-eyebrow{
+  position:relative;z-index:2;
+  font-size:10px;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:24px;opacity:.9;
+  display:flex;align-items:center;gap:16px;
+}
+.hero-eyebrow::before{content:"";width:40px;height:1px;background:var(--amber);opacity:.6}
+.hero h1{
+  position:relative;z-index:2;
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(52px,9vw,130px);
+  font-weight:300;line-height:.92;
+  letter-spacing:-.02em;
+  max-width:1000px;
+  margin-bottom:40px;
+}
+.hero h1 em{font-style:italic;color:var(--amber)}
+.hero-sub{
+  position:relative;z-index:2;
+  max-width:480px;
+  font-size:13px;line-height:1.8;
+  color:rgba(240,232,216,.6);
+  margin-bottom:48px;
+}
+.hero-actions{position:relative;z-index:2;display:flex;gap:16px;flex-wrap:wrap}
+.btn-primary{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  background:var(--amber);color:var(--night);
+  padding:16px 32px;border-radius:2px;
+  display:inline-flex;align-items:center;gap:12px;
+  transition:background .25s,transform .3s;
+}
+.btn-primary:hover{background:var(--paper);transform:translateY(-2px)}
+.btn-ghost{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(240,232,216,.6);
+  padding:16px 32px;
+  border:1px solid rgba(240,232,216,.2);
+  border-radius:2px;
+  transition:border-color .25s,color .25s;
+}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber)}
+
+/* Horizon line */
+.hero-horizon{
+  position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber),transparent);
+  opacity:.25;
+}
+
+/* ---- SECTION BASE ---- */
+section{padding:100px 40px;position:relative}
+@media(max-width:700px){section{padding:72px 24px}}
+.wrap{max-width:1200px;margin:0 auto}
+.section-label{
+  font-size:10px;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:20px;
+  display:flex;align-items:center;gap:14px;
+}
+.section-label::before{content:"";width:28px;height:1px;background:var(--amber);opacity:.7}
+h2{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(36px,5vw,72px);
+  font-weight:300;letter-spacing:-.02em;line-height:1;
+  margin-bottom:24px;
+}
+h2 em{font-style:italic;color:var(--amber)}
+.body-text{
+  font-size:13px;line-height:1.85;
+  color:rgba(240,232,216,.6);
+  max-width:52ch;
+}
+
+/* ---- HOW IT WORKS ---- */
+.how{border-top:1px solid var(--rule)}
+.how-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;
+  margin-top:64px;
+}
+@media(max-width:900px){.how-grid{grid-template-columns:1fr;gap:48px}}
+.steps{display:flex;flex-direction:column;gap:0}
+.step{
+  padding:28px 0;border-bottom:1px solid var(--rule);
+  display:grid;grid-template-columns:56px 1fr;gap:20px;align-items:baseline;
+}
+.step-num{
+  font-family:'Cormorant Garamond',serif;
+  font-size:42px;font-style:italic;color:var(--amber);
+  line-height:1;opacity:.7;
+}
+.step h3{
+  font-family:'Cormorant Garamond',serif;
+  font-size:26px;font-weight:400;letter-spacing:-.01em;
+  margin-bottom:10px;
+}
+.step p{font-size:12px;line-height:1.8;color:rgba(240,232,216,.55)}
+
+/* Glowing destination card */
+.dest-card{
+  background:var(--night-2);
+  border:1px solid var(--rule);
+  border-radius:4px;
+  padding:36px;
+  position:relative;
+  overflow:hidden;
+}
+.dest-card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber),transparent);
+}
+.dest-card .card-label{
+  font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:24px;
+}
+.dest-card .city{
+  font-family:'Cormorant Garamond',serif;
+  font-size:56px;font-weight:300;letter-spacing:-.02em;
+  line-height:.9;margin-bottom:6px;
+}
+.dest-card .region{
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(240,232,216,.4);margin-bottom:32px;
+}
+.dest-card .reason{
+  font-family:'Cormorant Garamond',serif;
+  font-size:18px;font-style:italic;font-weight:300;
+  color:rgba(240,232,216,.75);line-height:1.5;
+  border-left:1px solid var(--amber);
+  padding-left:18px;margin-bottom:28px;
+}
+.dest-card .stats{
+  display:flex;gap:28px;
+  padding-top:20px;border-top:1px solid var(--rule);
+}
+.dest-card .stat .l{
+  font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(240,232,216,.35);display:block;margin-bottom:6px;
+}
+.dest-card .stat .v{
+  font-family:'Cormorant Garamond',serif;
+  font-size:22px;font-weight:300;color:var(--amber);
+}
+.dest-card .badge{
+  position:absolute;top:20px;right:20px;
+  width:70px;height:70px;border-radius:50%;
+  border:1px solid rgba(212,168,71,.4);
+  display:grid;place-items:center;text-align:center;
+  font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--amber);opacity:.8;
+  transform:rotate(15deg);
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;
+}
+
+/* ---- FEATURES ---- */
+.features{background:var(--night-2);border-top:1px solid var(--rule)}
+.feat-row{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--rule);
+  margin-top:64px;border:1px solid var(--rule);border-radius:4px;overflow:hidden;
+}
+@media(max-width:800px){.feat-row{grid-template-columns:1fr}}
+.feat{
+  background:var(--night-2);padding:40px 32px;
+  transition:background .3s;
+}
+.feat:hover{background:var(--night-3)}
+.feat-icon{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:48px;color:var(--amber);line-height:1;margin-bottom:20px;opacity:.8;
+}
+.feat h3{
+  font-family:'Cormorant Garamond',serif;
+  font-size:24px;font-weight:400;letter-spacing:-.01em;
+  margin-bottom:14px;
+}
+.feat p{font-size:12px;line-height:1.8;color:rgba(240,232,216,.5)}
+
+/* ---- PRICING ---- */
+.pricing{border-top:1px solid var(--rule)}
+.pricing-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:64px;
+}
+@media(max-width:800px){.pricing-grid{grid-template-columns:1fr}}
+.price-card{
+  border:1px solid var(--rule);border-radius:4px;
+  padding:40px;position:relative;overflow:hidden;
+}
+.price-card.pro{
+  border-color:rgba(212,168,71,.4);
+  background:linear-gradient(160deg,rgba(212,168,71,.04),rgba(192,90,48,.04));
+}
+.price-card.pro::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber),transparent);
+}
+.price-card .tier{
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(240,232,216,.45);margin-bottom:24px;
+}
+.price-card .amount{
+  font-family:'Cormorant Garamond',serif;
+  font-size:88px;font-weight:300;line-height:.9;letter-spacing:-.03em;
+  margin-bottom:8px;
+}
+.price-card .amount.pro-price{color:var(--amber)}
+.price-card .period{
+  font-size:11px;letter-spacing:.16em;color:rgba(240,232,216,.4);margin-bottom:32px;
+}
+.price-card ul{list-style:none;margin-bottom:36px;display:flex;flex-direction:column;gap:14px}
+.price-card li{font-size:12px;line-height:1.5;color:rgba(240,232,216,.6);padding-left:20px;position:relative}
+.price-card li::before{content:"—";position:absolute;left:0;color:var(--amber);opacity:.7}
+.price-card li.off{opacity:.3;text-decoration:line-through}
+.btn-pro{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  background:var(--amber);color:var(--night);
+  padding:14px 28px;border-radius:2px;
+  display:inline-block;
+  transition:background .25s,transform .3s;
+}
+.btn-pro:hover{background:var(--paper);transform:translateY(-2px)}
+.btn-free{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(240,232,216,.5);padding:14px 28px;border-radius:2px;
+  border:1px solid rgba(240,232,216,.15);
+  display:inline-block;transition:border-color .25s,color .25s;
+}
+.btn-free:hover{border-color:var(--amber);color:var(--amber)}
+
+/* ---- CTA ---- */
+.cta{
+  text-align:center;border-top:1px solid var(--rule);
+}
+.cta h2{font-size:clamp(40px,6vw,88px);margin-bottom:24px}
+.cta .sub{
+  font-size:13px;color:rgba(240,232,216,.5);margin-bottom:44px;letter-spacing:.04em;
+}
+.cta-coords{
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(212,168,71,.5);margin-top:36px;
+}
+
+/* ---- FOOTER ---- */
+footer{
+  border-top:1px solid var(--rule);
+  padding:40px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:20px;
+}
+.footer-logo{
+  font-family:'Cormorant Garamond',serif;
+  font-size:24px;font-weight:300;letter-spacing:.04em;color:var(--amber);
+}
+.footer-meta{
+  font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(240,232,216,.25);
+}
+
+/* Reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.8,.2,1)}
+.reveal.on{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="logo">Voya</div>
+  <div class="nav-links">
+    <a href="#how">Method</a>
+    <a href="#features">Features</a>
+    <a href="#pricing">Membership</a>
+  </div>
+  <a href="#cta" class="nav-cta">Start Exploring →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="wrap">
+    <div class="hero-eyebrow">AI Travel Discovery · Hidden Atlas</div>
+    <h1>
+      The places<br/>
+      light forgot to<br/>
+      <em>advertise.</em>
+    </h1>
+    <p class="hero-sub">
+      Voya finds destinations that aren't trending, aren't on any top-ten list, and aren't crowded.
+      Tell us how you travel in five questions. We'll do the rest.
+    </p>
+    <div class="hero-actions">
+      <a href="#cta" class="btn-primary">Start Exploring <span>→</span></a>
+      <a href="#how" class="btn-ghost">See the method</a>
+    </div>
+  </div>
+  <div class="hero-horizon"></div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="section-label">The Method</div>
+    <h2>Five questions.<br/><em>One hidden world.</em></h2>
+    <div class="how-grid">
+      <div class="steps reveal">
+        <div class="step">
+          <div class="step-num">i.</div>
+          <div>
+            <h3>Tell us how you travel</h3>
+            <p>Solo or together. Fast or slow. Tasting menus or street food. Five questions that actually matter — none about your star rating preference.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">ii.</div>
+          <div>
+            <h3>We surface the overlooked</h3>
+            <p>Our AI scans beyond the algorithm — quiet valleys, towns just past the postcard, seasons when the crowds disappear and the light goes golden.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">iii.</div>
+          <div>
+            <h3>Book where you trust</h3>
+            <p>We don't sell bookings. We link you directly to Booking.com and Skyscanner. Your trip, your call. We just found the place.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="dest-card reveal">
+        <div class="card-label">Your match · Voya · Hidden Gem</div>
+        <div class="city">Kotor</div>
+        <div class="region">Montenegro · Adriatic Coast</div>
+        <div class="reason">
+          "The Bay of Kotor in May is the Adriatic before it became a brand.
+          Walled city, no cruise ships until June.
+          Exactly your pace."
+        </div>
+        <div class="stats">
+          <div class="stat"><span class="l">Match</span><span class="v">96%</span></div>
+          <div class="stat"><span class="l">Crowd score</span><span class="v">Low</span></div>
+          <div class="stat"><span class="l">Best time</span><span class="v">May</span></div>
+        </div>
+        <div class="badge">Hidden Gem Verified</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="wrap">
+    <div class="section-label">What's Inside</div>
+    <h2>Built for travelers who<br/><em>ask better questions.</em></h2>
+    <div class="feat-row reveal">
+      <div class="feat">
+        <div class="feat-icon">◎</div>
+        <h3>Hidden destinations</h3>
+        <p>Not recycled postcards. Places your friends haven't been. Each comes with a specific reason it fits you — not a star rating.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">◐</div>
+        <h3>Golden hour timing</h3>
+        <p>Exact viewpoints, best angles, and the precise minute the light turns. The locals' spot, not the tour bus stop.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">◈</div>
+        <h3>Card optimizer</h3>
+        <p>Before you book, Voya surfaces which card in your wallet earns the most — per airline, per hotel chain, per date.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="wrap">
+    <div class="section-label">Membership</div>
+    <h2>Start <em>free.</em><br/>Go deeper when ready.</h2>
+    <div class="pricing-grid">
+      <div class="price-card reveal">
+        <div class="tier">Wanderer · Free</div>
+        <div class="amount">$0</div>
+        <div class="period">No card required</div>
+        <ul>
+          <li>3 hidden gem recommendations</li>
+          <li>Full reasoning for each match</li>
+          <li>Direct booking links</li>
+          <li class="off">Golden hour coordinates</li>
+          <li class="off">Card optimizer</li>
+          <li class="off">Best budget match</li>
+        </ul>
+        <a href="#cta" class="btn-free">Start free</a>
+      </div>
+      <div class="price-card pro reveal">
+        <div class="tier">Voya Pro · Full Atlas</div>
+        <div class="amount pro-price">$9</div>
+        <div class="period">per month · cancel anytime</div>
+        <ul>
+          <li>Unlimited destination discovery</li>
+          <li>Best budget match unlocked</li>
+          <li>Golden hour photo spots</li>
+          <li>Card optimizer per booking</li>
+          <li>Deeper AI reasoning</li>
+          <li>Solo &amp; couple modes</li>
+        </ul>
+        <a href="#cta" class="btn-pro">Join Voya Pro →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="cta">
+  <div class="wrap">
+    <div class="section-label" style="justify-content:center">Ready</div>
+    <h2>Go where the<br/><em>algorithm forgot.</em></h2>
+    <div class="sub">getvoya.net · iOS &amp; Android · First 3 destinations, free, forever</div>
+    <a href="https://getvoya.net" class="btn-primary">Start Exploring →</a>
+    <div class="cta-coords">52.520°N · 13.405°E · Somewhere new is waiting</div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Voya</div>
+  <div class="footer-meta">The places light forgot to advertise · getvoya.net · © 2026</div>
+</footer>
+
+<script>
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); } });
+}, {threshold:.12});
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

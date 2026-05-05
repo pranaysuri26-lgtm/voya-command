@@ -545,6 +545,39 @@ async function countUsers() {
 }
 
 
+// ─── Forge builds ─────────────────────────────────────────────────────────────
+async function createForgeBuild(sessionId, taskDescription, filename, language, content) {
+  const { rows } = await pool.query(
+    `INSERT INTO forge_builds (session_id, task_description, filename, language, content)
+     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [sessionId, taskDescription, filename, language, content]
+  )
+  return rows[0]
+}
+
+async function getForgeBuild(id) {
+  const { rows } = await pool.query('SELECT * FROM forge_builds WHERE id=$1', [id])
+  return rows[0] || null
+}
+
+async function getForgeBuilds(limit = 30) {
+  const { rows } = await pool.query(
+    'SELECT * FROM forge_builds ORDER BY created_at DESC LIMIT $1', [limit]
+  )
+  return rows
+}
+
+async function getForgeBuildsBySession(sessionId) {
+  const { rows } = await pool.query(
+    'SELECT * FROM forge_builds WHERE session_id=$1 ORDER BY id ASC', [sessionId]
+  )
+  return rows
+}
+
+async function updateForgeBuildStatus(id, status) {
+  await pool.query('UPDATE forge_builds SET status=$1 WHERE id=$2', [status, id])
+}
+
 async function getFirstLaunchDone() {
   const val = await getState('first_launch_done')
   return val === '1'
@@ -569,5 +602,6 @@ module.exports = {
   getVpProfile, getVpProfileWithNotes, upsertVpProfile, updateVpName, updateVpNotes,
   getChairmanAway, setChairmanAway, clearChairmanAway,
   getUserByEmail, createUser, countUsers,
+  createForgeBuild, getForgeBuild, getForgeBuilds, getForgeBuildsBySession, updateForgeBuildStatus,
   getFirstLaunchDone, setFirstLaunchDone,
 }

@@ -121,6 +121,17 @@ const SCHEMA = `
     pin_hash TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
+
+  CREATE TABLE IF NOT EXISTS forge_builds (
+    id BIGSERIAL PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    task_description TEXT,
+    filename TEXT NOT NULL,
+    language TEXT,
+    content TEXT NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );
 `
 
 async function runMigrations() {
