@@ -174,7 +174,7 @@ function buildContentWithAttachments(text, imageAttachments = []) {
 // Direct chat: 10 messages.  Thread: handled in buildThreadMessages (20 msgs).
 const DIRECT_HISTORY_LIMIT  = 10
 const THREAD_HISTORY_LIMIT  = 20
-const DECISIONS_LIMIT       = 4   // recent decisions shown in system prompt
+const DECISIONS_LIMIT       = 10  // resolved decisions injected into system prompt
 const PENDING_APPROVALS_LIMIT = 5 // pending approvals shown in system prompt
 
 // ─── MODE 1 — direct 1-on-1 ──────────────────────────────────────────────────
@@ -199,7 +199,7 @@ async function _callAgent(agent, conversationHistory, newMessage, recentDecision
   }
 
   if (trimmedDecisions.length > 0) {
-    systemPrompt += '\n\nRECENT DECISIONS (all agents):\n'
+    systemPrompt += '\n\nRESOLVED DECISIONS — these issues are ALREADY CLOSED and fixed. Do NOT flag them as active risks or open items in your responses:\n'
     systemPrompt += trimmedDecisions
       .map(d => `- [${d.outcome.toUpperCase()}] ${d.title}: ${d.description}`)
       .join('\n')

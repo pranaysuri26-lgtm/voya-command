@@ -154,8 +154,10 @@ export function installWebAPI() {
       ),
     sendThreadMessage: (threadId, content, attachments = [], senderRole = 'chairman') =>
       POST(`/threads/${threadId}/messages`, { content, attachments, senderRole }),
-    pinThread:    (id, pinned) => PATCH(`/threads/${id}/pin`, { pinned }),
-    archiveThread:(id)         => DELETE(`/threads/${id}`),
+    pinThread:          (id, pinned) => PATCH(`/threads/${id}/pin`, { pinned }),
+    archiveThread:      (id)        => DELETE(`/threads/${id}`),
+    unarchiveThread:    (id)        => PATCH(`/threads/${id}/unarchive`, {}),
+    getArchivedThreads: ()          => GET('/threads/archived'),
 
     // ── Approvals ─────────────────────────────────────────────────────────────
     getApprovals:    (status = 'inbox') => GET(`/approvals?status=${status}`),

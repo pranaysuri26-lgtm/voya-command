@@ -441,15 +441,15 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
           {onDelete && (
             <button
               className="btn btn-secondary"
-              style={{ fontSize: 11, padding: '3px 9px', color: 'var(--danger)', borderColor: 'var(--danger)33' }}
+              style={{ fontSize: 11, padding: '3px 9px', color: 'var(--text-3)' }}
               onClick={() => {
-                if (window.confirm(`Delete thread "${thread.name}"? This cannot be undone.`)) {
+                if (window.confirm(`Archive "${thread.name}"? The thread and all its messages will be preserved — you can restore it from the sidebar.`)) {
                   onDelete(threadId)
                 }
               }}
-              title="Delete this thread"
+              title="Archive this thread"
             >
-              🗑
+              Archive
             </button>
           )}
         </div>

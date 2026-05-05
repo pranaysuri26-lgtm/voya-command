@@ -102,7 +102,28 @@ router.patch('/:id/pin', requireAuth, async (req, res) => {
   }
 })
 
-// DELETE /threads/:id — archive
+// GET /threads/archived — list archived threads
+router.get('/archived', requireAuth, async (req, res) => {
+  try {
+    const threads = await db.getArchivedThreads()
+    res.json(threads)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// PATCH /threads/:id/unarchive — restore an archived thread
+router.patch('/:id/unarchive', requireAuth, async (req, res) => {
+  try {
+    await db.unarchiveThread(req.params.id)
+    broadcast.broadcast('threads-updated', {})
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// DELETE /threads/:id — archive (soft delete, data preserved)
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
     await db.archiveThread(req.params.id)

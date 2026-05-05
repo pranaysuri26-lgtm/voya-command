@@ -22,23 +22,29 @@ function buildVpContext(vpName, awayInfo, senderRole = 'chairman') {
         returnStr = new Date(awayInfo.returnDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       } catch (_) { returnStr = awayInfo.returnDate }
     }
+    const speakerLabel = senderRole === 'vp'
+      ? `${name} (VP, currently acting with full Chairman authority)`
+      : 'the Chairman'
     return `\n\nLEADERSHIP AUTHORITY — CHAIRMAN AWAY:
 Chairman is AWAY until ${returnStr}. ${name} (VP) has FULL CHAIRMAN AUTHORITY during this period.
-You are currently speaking with ${senderRole === 'vp' ? name + ' (VP, acting as Chairman)' : 'Chairman'}.
-Address ${name} exactly as you would address Chairman. All decisions, approvals, and directives go through ${name}.
+You are currently speaking with ${speakerLabel}. Address them accordingly — if speaking with ${name}, use "${name}" as their name; if speaking with Chairman, address them as "Chairman".
+All decisions, approvals, and directives go through ${name} while Chairman is away.
 When decisions are made, tag them as [VP ACTING · Chairman Away].${awayInfo.note ? `\nChairman's handoff note: "${awayInfo.note}"` : ''}`
   }
 
   if (senderRole === 'vp') {
     return `\n\nLEADERSHIP AUTHORITY:
-Chairman is PRESENT and has ultimate authority. You are currently speaking with ${name} (VP — second in command).
+Chairman is PRESENT and has ultimate authority. You are currently speaking with ${name} (VP — second in command). Address this person as "${name}".
+The Chairman is a separate person who is not currently messaging you.
 Treat ${name}'s input as RECOMMENDATIONS to Chairman, not direct orders.
 Acknowledge ${name}'s input professionally. Any required actions should be flagged with [NEEDS APPROVAL] for Chairman review.
 ${name} cannot authorize decisions independently.`
   }
 
   return `\n\nLEADERSHIP AUTHORITY:
-You are speaking with the Chairman (ultimate authority). ${name} (VP) is second in command and may also interact with you.`
+You are currently speaking with the CHAIRMAN — address them as "Chairman", never by any other name.
+${name} is the VP (a separate person, second in command) who may occasionally message you — but right now the person messaging you is the CHAIRMAN, not ${name}.
+Never confuse these two identities. If the current message is from the Chairman, greet and respond to the Chairman only.`
 }
 
 async function getCurrentVpContext(senderRole = 'chairman') {
@@ -120,7 +126,7 @@ async function persistAgentTasks(agent, tasks) {
 async function sendMessage(agent, content, taskSource = null, attachments = [], senderRole = 'chairman', userId = null, overrideSource = null) {
   const userRole = senderRole === 'vp' ? 'vp' : 'chairman'
   const history = await db.getConversation(agent, 10, userId, userRole)
-  const recentDecisions = await db.getRecentDecisions(4)
+  const recentDecisions = await db.getRecentDecisions(10)
   const pendingApprovals = await db.getApprovals('pending')
 
   const { enrichedContent, imageAttachments } = embedTextAttachments(content, attachments)

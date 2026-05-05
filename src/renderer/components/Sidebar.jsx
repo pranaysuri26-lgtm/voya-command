@@ -1,4 +1,5 @@
 import AgentAvatar from './AgentAvatar'
+import { useState } from 'react'
 
 const CSUITE = ['CPO', 'CMO', 'CTO', 'CFO', 'COO']
 
@@ -42,6 +43,7 @@ export default function Sidebar({
   selectedThread,
   pendingCount,
   threads,
+  archivedThreads = [],
   unreadThreadIds,
   mentionedThreadIds = new Set(),
   onSelectAgent,
@@ -49,6 +51,8 @@ export default function Sidebar({
   onNewThread,
   onSelectDecisions,
   onSelectDirect,
+  onUnarchiveThread,
+  onLogout,
   currentRole = 'chairman',
   vpProfile = null,
   chairmanAway = null,
@@ -57,6 +61,7 @@ export default function Sidebar({
   onOpenVpSetup,
   onOpenAwayModal,
 }) {
+  const [archivedExpanded, setArchivedExpanded] = useState(false)
   const isVp = currentRole === 'vp'
   const vpActing = isVp && chairmanAway?.active
   const vpName = vpProfile?.name || 'VP'
@@ -184,6 +189,52 @@ export default function Sidebar({
         )}
       </div>
 
+      {/* ── Archived Threads ── */}
+      {archivedThreads.length > 0 && (
+        <>
+          <div
+            className="sidebar-section"
+            style={{ cursor: 'pointer', userSelect: 'none' }}
+            onClick={() => setArchivedExpanded(v => !v)}
+          >
+            <div className="sidebar-section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ opacity: 0.6 }}>Archived</span>
+              <span style={{ fontSize: 9, color: 'var(--text-3)', opacity: 0.6 }}>
+                {archivedExpanded ? '▲' : '▼'} {archivedThreads.length}
+              </span>
+            </div>
+          </div>
+          {archivedExpanded && (
+            <div className="sidebar-threads" style={{ opacity: 0.7 }}>
+              {archivedThreads.map((t) => (
+                <div
+                  key={t.id}
+                  className="thread-list-item"
+                  style={{ cursor: 'default' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                    <span className="thread-list-item-name" style={{ opacity: 0.7 }}>{t.name}</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onUnarchiveThread && onUnarchiveThread(t.id) }}
+                      title="Restore thread"
+                      style={{
+                        background: 'none', border: '1px solid var(--border)',
+                        borderRadius: 4, color: 'var(--text-3)',
+                        fontSize: 9, padding: '1px 5px', cursor: 'pointer',
+                        flexShrink: 0, lineHeight: '14px',
+                      }}
+                    >
+                      Restore
+                    </button>
+                  </div>
+                  {t.members?.length > 0 && <MemberDots members={t.members} />}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
       <div className="sidebar-divider" />
 
       {/* ── Direct Messages ── */}
@@ -264,6 +315,22 @@ export default function Sidebar({
         </div>
 
         {/* VP cannot switch to Chairman — separate accounts */}
+
+        {/* Logout */}
+        <button
+          onClick={onLogout}
+          style={{
+            width: '100%', background: 'none', border: '1px solid var(--border)',
+            borderRadius: 6, color: 'var(--text-3)', fontSize: 10,
+            fontWeight: 600, padding: '5px 0', cursor: 'pointer',
+            letterSpacing: '0.04em', marginTop: 2,
+            transition: 'color 0.15s, border-color 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.borderColor = '#f8717155' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+        >
+          Sign out
+        </button>
       </div>
     </div>
   )

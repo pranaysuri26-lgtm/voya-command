@@ -113,6 +113,31 @@ function parseMentions(text) {
   return found
 }
 
+// ─── Resolved-decision overlap detector ──────────────────────────────────────
+// Returns the first resolved decision whose title keywords appear in the
+// agent message.  Used to show the "may already be resolved" banner.
+const STOP_WORDS = new Set([
+  'that', 'this', 'with', 'have', 'from', 'will', 'been', 'were', 'they',
+  'their', 'about', 'into', 'after', 'using', 'which', 'would', 'could',
+  'should', 'when', 'where', 'what', 'also', 'both', 'than', 'then',
+])
+function matchesResolvedDecision(content, decisions) {
+  if (!decisions?.length || !content) return null
+  const lower = content.toLowerCase()
+  for (const d of decisions) {
+    const keywords = d.title.toLowerCase()
+      .split(/\W+/)
+      .filter(w => w.length >= 4 && !STOP_WORDS.has(w))
+    if (keywords.length === 0) continue
+    const hits = keywords.filter(kw => lower.includes(kw))
+    // Require 2+ keyword hits, or 1 hit if the word is long/specific (≥8 chars)
+    if (hits.length >= 2 || (hits.length === 1 && hits[0].length >= 8)) {
+      return d
+    }
+  }
+  return null
+}
+
 function SystemNotice({ msg }) {
   const approved = msg.content.includes('APPROVED')
   const color = approved ? 'var(--success)' : 'var(--danger)'
@@ -134,7 +159,7 @@ function SystemNotice({ msg }) {
   )
 }
 
-function MessageBubble({ msg, agent }) {
+function MessageBubble({ msg, agent, decisions = [] }) {
   const isChairman = msg.role === 'chairman'
   const localFiles = msg._localFiles || []
 
@@ -162,6 +187,9 @@ function MessageBubble({ msg, agent }) {
       .replace(/\[BLOCKER:[^\]]+\]/gi, '')
       .trim()
   }
+
+  // Check if this agent message overlaps with a resolved decision
+  const resolvedMatch = !isChairman ? matchesResolvedDecision(cleanContent || msg.content, decisions) : null
 
   const displayAgent = msg.agent || agent
 
@@ -217,6 +245,20 @@ function MessageBubble({ msg, agent }) {
             <div className="dev-next-badge">→ NEXT: {nextMatch[1].trim()}</div>
           )}
         </div>
+        {resolvedMatch && (
+          <div style={{
+            marginTop: 6, padding: '5px 10px',
+            background: '#78350f18', border: '1px solid #f59e0b33',
+            borderRadius: 6, display: 'flex', alignItems: 'flex-start', gap: 7,
+          }}>
+            <span style={{ fontSize: 12, flexShrink: 0, marginTop: 1 }}>⚠️</span>
+            <div style={{ fontSize: 10, color: '#fbbf24', lineHeight: 1.5 }}>
+              <strong>This may already be resolved</strong> — "{resolvedMatch.title}" was logged as{' '}
+              <strong>{resolvedMatch.outcome}</strong> in the Decision Log.
+              {' '}<span style={{ opacity: 0.75 }}>Check the log before acting.</span>
+            </div>
+          </div>
+        )}
         <div className={`msg-meta ${isChairman ? 'right' : ''}`}>
           <span
             className="msg-sender"
@@ -283,6 +325,7 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
   const [mentionSearch, setMentionSearch] = useState(null) // null=closed, string=filter
   const [mentionTargets, setMentionTargets] = useState([]) // parsed @mentions in input
   const [toast, setToast] = useState(null)
+  const [decisions, setDecisions] = useState([])
   const [screenshotting, setScreenshotting] = useState(false)
   const [pendingFiles, setPendingFiles] = useState([])
   const [isDragOver, setIsDragOver] = useState(false)
@@ -296,6 +339,11 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
     loadHistory()
     setPendingFiles([])
   }, [selectedAgent])
+
+  // Load resolved decisions once — used for stale-context banner
+  useEffect(() => {
+    window.voyaAPI.getDecisions().then(d => setDecisions(d || [])).catch(() => {})
+  }, [])
 
   // Reload on WS reconnect (Railway wake) or window focus
   useEffect(() => {
@@ -497,6 +545,8 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
         }
         setMessages(prev => [...prev, agentMsg])
         if (result.approvals?.length > 0) onNewApprovals(result.approvals)
+        // Refresh decisions so the stale-context banner stays current
+        window.voyaAPI.getDecisions().then(d => setDecisions(d || [])).catch(() => {})
       } catch (err) {
         const errMsg = {
           id: `err-${Date.now()}-${agent}`,
@@ -627,7 +677,7 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
         {grouped.map(item =>
           item.type === 'divider'
             ? <DateDivider key={item.key} label={item.label} />
-            : <MessageBubble key={item.key} msg={item.msg} agent={selectedAgent} />
+            : <MessageBubble key={item.key} msg={item.msg} agent={selectedAgent} decisions={decisions} />
         )}
 
         {loading && (

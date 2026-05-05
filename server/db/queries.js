@@ -322,6 +322,28 @@ async function archiveThread(id) {
   await pool.query("UPDATE threads SET status='archived' WHERE id=$1", [id])
 }
 
+async function unarchiveThread(id) {
+  await pool.query("UPDATE threads SET status='active' WHERE id=$1", [id])
+}
+
+async function getArchivedThreads() {
+  const { rows: threads } = await pool.query(
+    "SELECT * FROM threads WHERE status='archived' ORDER BY created_at DESC LIMIT 50"
+  )
+  for (const t of threads) {
+    const { rows: members } = await pool.query(
+      'SELECT agent FROM thread_members WHERE thread_id=$1', [t.id]
+    )
+    t.members = members.map(m => m.agent)
+    const { rows: last } = await pool.query(
+      'SELECT sender,content,timestamp FROM thread_messages WHERE thread_id=$1 ORDER BY timestamp DESC LIMIT 1',
+      [t.id]
+    )
+    t.lastMessage = last[0] || null
+  }
+  return threads
+}
+
 async function getThreadsSince(since) {
   if (!since) return []
   const { rows } = await pool.query(
@@ -542,7 +564,7 @@ module.exports = {
   getDiscussions, getDiscussion, getDiscussionMessages, addDiscussionMessage, closeDiscussion,
   getOversightMessages,
   createThread, getThreadsWithDetails, getThread, getThreadMembers,
-  getThreadMessages, addThreadMessage, setThreadPinned, archiveThread, getThreadsSince,
+  getThreadMessages, addThreadMessage, setThreadPinned, archiveThread, unarchiveThread, getArchivedThreads, getThreadsSince,
   getState, setState,
   getVpProfile, getVpProfileWithNotes, upsertVpProfile, updateVpName, updateVpNotes,
   getChairmanAway, setChairmanAway, clearChairmanAway,

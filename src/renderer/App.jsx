@@ -36,6 +36,7 @@ export default function App() {
   const [oversightUnread, setOversightUnread] = useState(false)
   const [activityNotice, setActivityNotice] = useState(null) // high-activity toast
   const [wsConnected, setWsConnected] = useState(true) // WS connection status
+  const [archivedThreads, setArchivedThreads] = useState([])
 
   // VP state
   const [currentRole, setCurrentRole] = useState('chairman') // 'chairman' | 'vp'
@@ -94,14 +95,16 @@ export default function App() {
   async function init() {
     try {
       const isFirst = await window.voyaAPI.getFirstLaunch()
-      const [pendingApprovals, allThreads, vp, away] = await Promise.all([
+      const [pendingApprovals, allThreads, archived, vp, away] = await Promise.all([
         window.voyaAPI.getApprovals('inbox'),
         window.voyaAPI.getThreads(),
+        window.voyaAPI.getArchivedThreads(),
         window.voyaAPI.getVpProfile(),
         window.voyaAPI.getChairmanAway(),
       ])
       setApprovals(pendingApprovals)
       setThreads(allThreads)
+      setArchivedThreads(archived || [])
       setVpProfile(vp)
       setChairmanAway(away)
 
@@ -191,6 +194,7 @@ export default function App() {
 
     window.voyaAPI.on('threads-updated', () => {
       window.voyaAPI.getThreads().then(setThreads)
+      window.voyaAPI.getArchivedThreads().then(a => setArchivedThreads(a || []))
     })
 
     // Another user resolved an approval — sync inbox
@@ -280,10 +284,39 @@ export default function App() {
 
   async function handleDeleteThread(threadId) {
     await window.voyaAPI.archiveThread(threadId)
-    const allThreads = await window.voyaAPI.getThreads()
+    const [allThreads, archived] = await Promise.all([
+      window.voyaAPI.getThreads(),
+      window.voyaAPI.getArchivedThreads(),
+    ])
     setThreads(allThreads)
+    setArchivedThreads(archived || [])
     setSelectedThread(null)
     setActiveView('chat') // return to default agent chat
+  }
+
+  async function handleUnarchiveThread(threadId) {
+    await window.voyaAPI.unarchiveThread(threadId)
+    const [allThreads, archived] = await Promise.all([
+      window.voyaAPI.getThreads(),
+      window.voyaAPI.getArchivedThreads(),
+    ])
+    setThreads(allThreads)
+    setArchivedThreads(archived || [])
+  }
+
+  function handleLogout() {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(USER_KEY)
+    localStorage.removeItem('voya_last_brief_date')
+    setAuthed(false)
+    setReady(false)
+    setAuthUser(null)
+    setCurrentRole('chairman')
+    setThreads([])
+    setArchivedThreads([])
+    setApprovals([])
+    setSelectedThread(null)
+    setActiveView('chat')
   }
 
   function selectDirect() {
@@ -395,6 +428,7 @@ export default function App() {
         selectedThread={selectedThread}
         pendingCount={pendingCount}
         threads={threads}
+        archivedThreads={archivedThreads}
         unreadThreadIds={unreadThreadIds}
         mentionedThreadIds={mentionedThreadIds}
         onSelectAgent={selectAgent}
@@ -404,6 +438,8 @@ export default function App() {
         onSelectDirect={selectDirect}
         onSelectTasks={selectTasks}
         onSelectBrief={selectBrief}
+        onUnarchiveThread={handleUnarchiveThread}
+        onLogout={handleLogout}
         currentRole={currentRole}
         vpProfile={vpProfile}
         chairmanAway={chairmanAway}
