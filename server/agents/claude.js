@@ -350,6 +350,7 @@ async function _callAgentInThread(agent, threadName, members, history, recentDec
 
   systemPrompt += `\n\nYou are in a group thread called "${threadName}". Other participants: ${otherMembers.join(', ') || 'Chairman only'}.`
   systemPrompt += '\nRespond concisely to the latest message. You can address specific participants by name.'
+  systemPrompt += `\nIMPORTANT: If your response requires input, a decision, or a reaction from a specific participant, tag them with @NAME (e.g. @CFO, @CTO, @CPO). This will notify them and they will respond directly to you. Use this to have real back-and-forth conversations — not just to inform, but to actively collaborate and reach conclusions together.`
 
   const trimmedDecisions = recentDecisions.slice(0, DECISIONS_LIMIT)
   if (trimmedDecisions.length > 0) {
