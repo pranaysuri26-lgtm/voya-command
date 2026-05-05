@@ -62,8 +62,11 @@ function connectWS() {
     _ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data)
-        const { type, ...payload } = msg
-        if (type === 'pong') return // ignore server pong replies
+        // Use 'event' as the routing key (matches server broadcast format).
+        // Payload retains its own 'type' sub-field (e.g. 'message'/'typing'/'done')
+        // so components can still check update.type as before.
+        const { event: type, ...payload } = msg
+        if (!type) return // ignore server pong and other unrouted messages
         for (const cb of (_wsListeners[type] || [])) cb(payload)
       } catch { /* ignore malformed */ }
     }

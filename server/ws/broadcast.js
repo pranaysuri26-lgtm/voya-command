@@ -51,7 +51,9 @@ function init(server) {
 
 function broadcast(eventType, payload) {
   if (!wss) return
-  const msg = JSON.stringify({ type: eventType, ...payload })
+  // Use 'event' as the routing key so that a 'type' field inside payload
+  // (e.g. { type: 'message' } on thread-update events) never clobbers it.
+  const msg = JSON.stringify({ event: eventType, ...payload })
   for (const ws of clients) {
     if (ws.readyState === WebSocket.OPEN) {
       try { ws.send(msg) } catch { /* ignore */ }

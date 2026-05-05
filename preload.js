@@ -47,12 +47,17 @@ function connectWS() {
       // Flush any queued messages
       for (const fn of _wsQueue) fn()
       _wsQueue = []
+      // Notify listeners that WS is connected
+      for (const cb of (_wsListeners['ws-connected'] || [])) cb({})
     }
 
     _ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data)
-        const { type, ...payload } = msg
+        // Use 'event' as the routing key (matches server broadcast format).
+        // Payload retains its own 'type' sub-field (e.g. 'message'/'typing'/'done')
+        // so components can still check update.type as before.
+        const { event: type, ...payload } = msg
         const cbs = _wsListeners[type] || []
         for (const cb of cbs) cb(payload)
       } catch { /* ignore malformed messages */ }
@@ -60,6 +65,8 @@ function connectWS() {
 
     _ws.onclose = () => {
       _wsReady = false
+      // Notify listeners that WS disconnected
+      for (const cb of (_wsListeners['ws-disconnected'] || [])) cb({})
       // Reconnect after 3s if we have a token
       if (_token) setTimeout(connectWS, 3000)
     }
@@ -235,6 +242,9 @@ contextBridge.exposeInMainWorld('voyaAPI', {
       'threads-updated':        'threads-updated',
       'approval-resolved':      'approval-resolved',
       'high-activity':          'high-activity',
+      'forge-build':            'forge-build',
+      'ws-connected':           'ws-connected',
+      'ws-disconnected':        'ws-disconnected',
     }
 
     const wsType = channelMap[channel]
