@@ -15,6 +15,9 @@ jobs:
 
       - name: Deploy to Railway
         working-directory: ./server
-        run: railway up --service voya-command --detach
+        run: railway up --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: 5ed2d969-d98e-42b5-a825-c248b24349fc
+          RAILWAY_SERVICE_ID: 13cc33b1-7b9d-4f64-9f37-267538041cfa
+          RAILWAY_ENVIRONMENT_ID: 645fab30-6227-456d-976a-88a2f7c9f782
