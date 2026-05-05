@@ -93,46 +93,47 @@ export default function NewThreadModal({ onClose, onCreate, vpProfile = null, cu
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
 
-            {/* VP — human participant (only show for Chairman, not VP themselves) */}
-            {currentRole !== 'vp' && (() => {
-              const vpKey = 'VP'
-              const vpColor = '#94A3B8'
-              const vpLabel = vpProfile?.name || 'VP'
+            {/* Human participants — VP sees Chairman, Chairman sees VP */}
+            {(() => {
+              const humanKey   = currentRole === 'vp' ? 'CHAIRMAN' : 'VP'
+              const humanColor = currentRole === 'vp' ? 'var(--accent)' : '#94A3B8'
+              const humanLabel = currentRole === 'vp' ? 'Chairman' : (vpProfile?.name || 'VP')
+              const humanRole  = currentRole === 'vp' ? 'Human · Chairman' : 'Human · VP'
               return (
                 <div
-                  key="VP"
-                  onClick={() => toggleAgent(vpKey)}
+                  key={humanKey}
+                  onClick={() => toggleAgent(humanKey)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '7px 10px', borderRadius: 'var(--radius)',
                     cursor: 'pointer',
-                    background: selected.has(vpKey) ? `${vpColor}18` : 'transparent',
-                    border: `1px solid ${selected.has(vpKey) ? vpColor + '55' : 'transparent'}`,
+                    background: selected.has(humanKey) ? '#ffffff10' : 'transparent',
+                    border: `1px solid ${selected.has(humanKey) ? '#ffffff33' : 'transparent'}`,
                     transition: 'all 0.12s',
                   }}
                 >
                   <div style={{
                     width: 14, height: 14, borderRadius: 3,
-                    border: `2px solid ${selected.has(vpKey) ? vpColor : 'var(--border)'}`,
-                    background: selected.has(vpKey) ? vpColor : 'transparent',
+                    border: `2px solid ${selected.has(humanKey) ? humanColor : 'var(--border)'}`,
+                    background: selected.has(humanKey) ? humanColor : 'transparent',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0, transition: 'all 0.12s',
                   }}>
-                    {selected.has(vpKey) && (
+                    {selected.has(humanKey) && (
                       <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
                         <path d="M1 4l2 2 4-4" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
                     )}
                   </div>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: vpColor, flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, fontWeight: 700, color: vpColor }}>{vpLabel}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-3)' }}>Human · VP</span>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: humanColor, flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: humanColor }}>{humanLabel}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{humanRole}</span>
                 </div>
               )
             })()}
 
             {/* Divider between human and AI agents */}
-            {currentRole !== 'vp' && (
+            {(
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0' }}>
                 <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
                 <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 600 }}>AI AGENTS</span>
