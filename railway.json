@@ -5,7 +5,7 @@
     "buildCommand": "npm install && npm run build:web && cd server && npm install"
   },
   "deploy": {
-    "startCommand": "cd server && NODE_TLS_REJECT_UNAUTHORIZED=0 node index.js",
+    "startCommand": "cd server && node index.js",
     "restartPolicyType": "ON_FAILURE"
   }
 }
