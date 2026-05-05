@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 
-const AGENTS = [
+const AI_AGENTS = [
   { key: 'CPO',   label: 'CPO',   role: 'Product',     color: '#818cf8' },
   { key: 'CMO',   label: 'CMO',   role: 'Marketing',   color: '#f472b6' },
   { key: 'CTO',   label: 'CTO',   role: 'Technology',  color: '#22d3ee' },
@@ -9,7 +9,7 @@ const AGENTS = [
   { key: 'FORGE', label: 'FORGE', role: 'AI Developer', color: '#00BCD4' },
 ]
 
-export default function NewThreadModal({ onClose, onCreate }) {
+export default function NewThreadModal({ onClose, onCreate, vpProfile = null, currentRole = 'chairman' }) {
   const [name, setName] = useState('')
   const [selected, setSelected] = useState(new Set())
   const [creating, setCreating] = useState(false)
@@ -92,7 +92,55 @@ export default function NewThreadModal({ onClose, onCreate }) {
             ADD MEMBERS
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {AGENTS.map(a => (
+
+            {/* VP — human participant (only show if not VP themselves, so Chairman sees it) */}
+            {currentRole !== 'vp' && vpProfile && (() => {
+              const vpKey = 'VP'
+              const vpColor = '#94A3B8'
+              const vpLabel = vpProfile.name || 'VP'
+              return (
+                <div
+                  key="VP"
+                  onClick={() => toggleAgent(vpKey)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '7px 10px', borderRadius: 'var(--radius)',
+                    cursor: 'pointer',
+                    background: selected.has(vpKey) ? `${vpColor}18` : 'transparent',
+                    border: `1px solid ${selected.has(vpKey) ? vpColor + '55' : 'transparent'}`,
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  <div style={{
+                    width: 14, height: 14, borderRadius: 3,
+                    border: `2px solid ${selected.has(vpKey) ? vpColor : 'var(--border)'}`,
+                    background: selected.has(vpKey) ? vpColor : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, transition: 'all 0.12s',
+                  }}>
+                    {selected.has(vpKey) && (
+                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                        <path d="M1 4l2 2 4-4" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    )}
+                  </div>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: vpColor, flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: vpColor }}>{vpLabel}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-3)' }}>Human · VP</span>
+                </div>
+              )
+            })()}
+
+            {/* Divider between human and AI agents */}
+            {currentRole !== 'vp' && vpProfile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0' }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
+                <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 600 }}>AI AGENTS</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
+              </div>
+            )}
+
+            {AI_AGENTS.map(a => (
               <div
                 key={a.key}
                 onClick={() => toggleAgent(a.key)}

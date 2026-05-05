@@ -340,6 +340,8 @@ export default function App() {
         <NewThreadModal
           onClose={() => setIsNewThreadModalOpen(false)}
           onCreate={handleThreadCreated}
+          vpProfile={vpProfile}
+          currentRole={currentRole}
         />
       )}
 

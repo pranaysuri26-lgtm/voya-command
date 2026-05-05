@@ -232,9 +232,10 @@ async function openDiscussionFromAgent(topic, reason, triggerAgent) {
 const AGENT_MENTION_RE = /@(CPO|CMO|CTO|CFO|COO|FORGE)/g
 function extractMentions(content, members, sender) {
   const mentioned = new Set()
+  const aiMembers = members.filter(m => !HUMAN_MEMBERS.has(m))
   for (const match of content.matchAll(AGENT_MENTION_RE)) {
     const name = match[1].toUpperCase()
-    if (name !== sender && members.includes(name)) mentioned.add(name)
+    if (name !== sender && aiMembers.includes(name)) mentioned.add(name)
   }
   return [...mentioned]
 }
@@ -293,12 +294,16 @@ async function _runOneAgent(agent, thread, history, recentDecisions, attachments
 const MAX_CONTINUATION_ROUNDS = 2
 const AGENT_STAGGER_MS = 3000  // FIX 4: 3 s between agents in round 0
 
+// Human participants — never call AI for these
+const HUMAN_MEMBERS = new Set(['VP', 'CHAIRMAN', 'vp', 'chairman'])
+
 async function runThreadAgentResponses(threadId, currentAttachments = [], onUpdate) {
   const recentDecisions = await db.getRecentDecisions(4) // FIX 2: was 6
   const thread = await db.getThread(threadId)
   if (!thread) return
 
-  const members = thread.members
+  // Only run AI responses for actual AI agents, skip human participants (VP, CHAIRMAN)
+  const members = thread.members.filter(m => !HUMAN_MEMBERS.has(m))
   let history = await db.getThreadMessages(threadId, 20) // FIX 2: was 100
 
   // ── Round 0: stagger agents (FIX 4) ──────────────────────────────────────
