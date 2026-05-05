@@ -26,6 +26,7 @@ export default function App() {
   const [selectedThread, setSelectedThread] = useState(null)
   const [threads, setThreads] = useState([])
   const [unreadThreadIds, setUnreadThreadIds] = useState(new Set())
+  const [mentionedThreadIds, setMentionedThreadIds] = useState(new Set())
   const [isNewThreadModalOpen, setIsNewThreadModalOpen] = useState(false)
   const [approvals, setApprovals] = useState([])
   const [rightTab, setRightTab] = useState('inbox')
@@ -142,13 +143,22 @@ export default function App() {
 
     window.voyaAPI.on('thread-update', (update) => {
       if (update.type === 'message') {
+        const isCurrentThread = activeView === 'thread' && selectedThread === update.threadId
         setUnreadThreadIds(prev => {
-          if (activeView === 'thread' && selectedThread === update.threadId) return prev
+          if (isCurrentThread) return prev
           const next = new Set(prev)
           next.add(update.threadId)
           return next
         })
-        // Mark oversight as unread if not currently viewing it
+        // Check if current user is @mentioned
+        const myTag = currentRole === 'vp' ? '@VP' : '@Chairman'
+        if (update.content?.includes(myTag) && !isCurrentThread) {
+          setMentionedThreadIds(prev => {
+            const next = new Set(prev)
+            next.add(update.threadId)
+            return next
+          })
+        }
         setOversightUnread(prev => prev || true)
         window.voyaAPI.getThreads().then(setThreads)
       }
@@ -246,11 +256,8 @@ export default function App() {
   function selectThread(id) {
     setSelectedThread(id)
     setActiveView('thread')
-    setUnreadThreadIds(prev => {
-      const next = new Set(prev)
-      next.delete(id)
-      return next
-    })
+    setUnreadThreadIds(prev => { const next = new Set(prev); next.delete(id); return next })
+    setMentionedThreadIds(prev => { const next = new Set(prev); next.delete(id); return next })
   }
 
   async function handleThreadCreated(threadId) {
@@ -353,6 +360,7 @@ export default function App() {
         pendingCount={pendingCount}
         threads={threads}
         unreadThreadIds={unreadThreadIds}
+        mentionedThreadIds={mentionedThreadIds}
         onSelectAgent={selectAgent}
         onSelectThread={selectThread}
         onNewThread={() => setIsNewThreadModalOpen(true)}

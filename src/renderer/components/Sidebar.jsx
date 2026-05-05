@@ -41,6 +41,7 @@ export default function Sidebar({
   pendingCount,
   threads,
   unreadThreadIds,
+  mentionedThreadIds = new Set(),
   onSelectAgent,
   onSelectThread,
   onNewThread,
@@ -135,6 +136,7 @@ export default function Sidebar({
         {threads.map((t) => {
           const isActive = activeView === 'thread' && selectedThread === t.id
           const hasUnread = unreadThreadIds.has(t.id)
+          const hasMention = mentionedThreadIds.has(t.id)
           return (
             <div
               key={t.id}
@@ -146,7 +148,14 @@ export default function Sidebar({
                   <span style={{ fontSize: 9, color: 'var(--text-3)' }}>📌</span>
                 ) : null}
                 <span className="thread-list-item-name">{t.name}</span>
-                {hasUnread && <div className="thread-unread-dot" />}
+                {hasMention && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 800, color: '#fff',
+                    background: 'var(--accent)', borderRadius: 4,
+                    padding: '0px 4px', lineHeight: '14px',
+                  }}>@</span>
+                )}
+                {hasUnread && !hasMention && <div className="thread-unread-dot" />}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <MemberDots members={t.members} />

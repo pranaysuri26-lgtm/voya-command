@@ -8,6 +8,29 @@ const AGENT_COLORS = {
   CFO: '#34d399', COO: '#fbbf24', FORGE: '#00BCD4',
 }
 
+// Render message text with @Chairman and @VP highlighted as pills
+function renderWithMentions(text) {
+  if (!text) return text
+  const parts = text.split(/(@Chairman|@VP)/g)
+  return parts.map((part, i) => {
+    if (part === '@Chairman') return (
+      <span key={i} style={{
+        display: 'inline-block', padding: '0 6px', borderRadius: 4,
+        background: '#4f46e522', color: '#818cf8',
+        fontWeight: 700, fontSize: '0.95em',
+      }}>@Chairman</span>
+    )
+    if (part === '@VP') return (
+      <span key={i} style={{
+        display: 'inline-block', padding: '0 6px', borderRadius: 4,
+        background: '#94A3B822', color: '#94A3B8',
+        fontWeight: 700, fontSize: '0.95em',
+      }}>@VP</span>
+    )
+    return part
+  })
+}
+
 function formatTime(ts) {
   const d = new Date(ts)
   const today = new Date()
@@ -90,9 +113,10 @@ function ThreadMessage({ msg, localFiles, vpName = 'VP' }) {
           style={{ userSelect: 'text', cursor: 'text' }}
           onContextMenu={handleContextMenu}
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {cleanContent || msg.content}
-          </ReactMarkdown>
+          {/(@Chairman|@VP)/.test(cleanContent || msg.content)
+            ? <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{renderWithMentions(cleanContent || msg.content)}</p>
+            : <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleanContent || msg.content}</ReactMarkdown>
+          }
           {displayAttachments.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               {displayAttachments.map((f, i) => f.dataUrl
