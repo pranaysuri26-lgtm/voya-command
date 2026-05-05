@@ -8,7 +8,7 @@ const broadcast = require('../ws/broadcast')
 // GET /agents/:agent/conversation
 router.get('/:agent/conversation', requireAuth, async (req, res) => {
   try {
-    const messages = await db.getConversation(req.params.agent, 40)
+    const messages = await db.getConversation(req.params.agent, 40, req.user.id, req.user.role)
     res.json(messages)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -23,11 +23,21 @@ router.post('/:agent/message', requireAuth, async (req, res) => {
 
     if (!content) return res.status(400).json({ error: 'content required' })
 
-    const result = await agentManager.sendMessage(agent, content, null, attachments, senderRole)
+    // VP_DIRECT — human-to-human DM channel, no AI response
+    if (agent === 'VP_DIRECT') {
+      const storedSource = senderRole === 'vp' ? 'vp' : 'manual'
+      await db.addMessage('VP_DIRECT', 'chairman', content, storedSource, null) // no userId scoping — shared DM channel
+      const ts = new Date().toISOString()
+      broadcast.broadcast('direct-message', { sender: storedSource, content, timestamp: ts })
+      return res.json({ content: null, approvals: [], isDirect: true })
+    }
 
-    // Broadcast to all clients
+    const result = await agentManager.sendMessage(agent, content, null, attachments, senderRole, req.user.id)
+
+    // Broadcast to clients — include userId so other clients can ignore messages not their own
     broadcast.broadcast('agent-message', {
       agent,
+      userId: req.user.id,
       content: result.content,
       role: 'agent',
       source: 'manual',

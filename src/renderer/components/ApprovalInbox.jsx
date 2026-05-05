@@ -20,7 +20,7 @@ function formatDate(ts) {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
-function ThreadCreationCard({ approval, onResolve, readOnly = false }) {
+function ThreadCreationCard({ approval, onResolve, readOnly = false, vpCanApprove = false }) {
   const [loading, setLoading] = useState(false)
   let meta = {}
   try { meta = JSON.parse(approval.metadata || '{}') } catch (_) {}
@@ -64,8 +64,22 @@ function ThreadCreationCard({ approval, onResolve, readOnly = false }) {
         <div className="approval-card-desc">{meta.reason}</div>
       )}
       {readOnly ? (
-        <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic', marginTop: 4, padding: '0 2px' }}>
-          Chairman approval required to create this thread.
+        <div style={{ fontSize: 11, color: '#f87171', fontStyle: 'italic', marginTop: 4, padding: '0 2px' }}>
+          🔒 Customer-facing thread — Chairman approval required.
+        </div>
+      ) : vpCanApprove ? (
+        <div>
+          <div style={{ fontSize: 10, color: '#34d399', fontWeight: 600, marginBottom: 6, padding: '0 2px' }}>
+            ✓ Internal thread — VP authority applies
+          </div>
+          <div className="approval-actions">
+            <button className="btn btn-approve" onClick={() => resolve('approved')} disabled={loading}>
+              ✓ Create Thread
+            </button>
+            <button className="btn btn-reject" onClick={() => resolve('rejected')} disabled={loading}>
+              ✗ Decline
+            </button>
+          </div>
         </div>
       ) : (
         <div className="approval-actions">
@@ -81,7 +95,22 @@ function ThreadCreationCard({ approval, onResolve, readOnly = false }) {
   )
 }
 
-function ApprovalCard({ approval, onResolve, readOnly = false }) {
+// Classify whether a decision is customer-facing (VP cannot approve)
+// or internal/staging (VP can approve)
+const CUSTOMER_FACING_RE = /\b(customer|user[s]?|public|launch|market|brand|pricing|payment|billing|landing page|website|campaign|ad[s]?|email blast|press|announcement|feature release|onboard|signup|checkout|revenue|sales)\b/i
+const INTERNAL_RE = /\b(staging|deploy|infra|database|migration|schema|cron|backup|server|api|internal|test|dev|ci|cd|pipeline|config|env|secret|aws|s3|r2|railway|codebase|refactor|dependency|node|package)\b/i
+
+function isCustomerFacing(approval) {
+  const text = `${approval.title} ${approval.description}`.toLowerCase()
+  // If it explicitly matches internal/staging patterns, VP can handle it
+  if (INTERNAL_RE.test(text)) return false
+  // If it matches customer-facing patterns, Chairman only
+  if (CUSTOMER_FACING_RE.test(text)) return true
+  // Default: Chairman only for anything ambiguous
+  return true
+}
+
+function ApprovalCard({ approval, onResolve, readOnly = false, vpCanApprove = false }) {
   const [loading, setLoading] = useState(false)
   const isHeld = approval.status === 'held'
 
@@ -117,8 +146,22 @@ function ApprovalCard({ approval, onResolve, readOnly = false }) {
       <div className="approval-card-desc">{approval.description}</div>
 
       {readOnly ? (
-        <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic', marginTop: 4, padding: '0 2px' }}>
-          Chairman approval required for this decision.
+        <div style={{ fontSize: 11, color: '#f87171', fontStyle: 'italic', marginTop: 4, padding: '0 2px' }}>
+          🔒 Customer-facing — Chairman approval required.
+        </div>
+      ) : vpCanApprove ? (
+        <div>
+          <div style={{ fontSize: 10, color: '#34d399', fontWeight: 600, marginBottom: 6, padding: '0 2px' }}>
+            ✓ Internal decision — VP authority applies
+          </div>
+          <div className="approval-actions">
+            <button className="btn btn-approve" onClick={() => resolve('approved')} disabled={loading}>
+              ✓ Approve
+            </button>
+            <button className="btn btn-reject" onClick={() => resolve('rejected')} disabled={loading}>
+              ✗ Reject
+            </button>
+          </div>
         </div>
       ) : (
         <div className="approval-actions">
@@ -149,7 +192,7 @@ function ApprovalCard({ approval, onResolve, readOnly = false }) {
 
 export default function ApprovalInbox({ approvals, onResolve, currentRole = 'chairman', vpActing = false, vpName = 'VP' }) {
   const pending = approvals.filter((a) => a.status === 'pending' || a.status === 'held')
-  const isVp = currentRole === 'vp' // VP is always read-only — advisory role only
+  const isVp = currentRole === 'vp'
 
   if (pending.length === 0) {
     return (
@@ -163,7 +206,7 @@ export default function ApprovalInbox({ approvals, onResolve, currentRole = 'cha
 
   return (
     <div>
-      {/* VP — always read-only, advisory only */}
+      {/* VP — can approve internal/staging, read-only on customer-facing */}
       {isVp && pending.length > 0 && (
         <div style={{
           margin: '8px 8px 4px', padding: '8px 10px',
@@ -172,14 +215,17 @@ export default function ApprovalInbox({ approvals, onResolve, currentRole = 'cha
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
           <span style={{ fontWeight: 700 }}>VP</span>
-          <span>Advisory view only. Chairman approves all decisions.</span>
+          <span>You can approve internal & staging decisions. Customer-facing decisions require Chairman.</span>
         </div>
       )}
-      {pending.map((a) =>
-        a.type === 'thread_creation'
-          ? <ThreadCreationCard key={a.id} approval={a} onResolve={isVp ? null : onResolve} readOnly={isVp} />
-          : <ApprovalCard key={a.id} approval={a} onResolve={isVp ? null : onResolve} readOnly={isVp} />
-      )}
+      {pending.map((a) => {
+        const customerFacing = isCustomerFacing(a)
+        const vpReadOnly = isVp && customerFacing
+        const vpCanApprove = isVp && !customerFacing
+        return a.type === 'thread_creation'
+          ? <ThreadCreationCard key={a.id} approval={a} onResolve={vpReadOnly ? null : onResolve} readOnly={vpReadOnly} vpCanApprove={vpCanApprove} />
+          : <ApprovalCard key={a.id} approval={a} onResolve={vpReadOnly ? null : onResolve} readOnly={vpReadOnly} vpCanApprove={vpCanApprove} />
+      })}
     </div>
   )
 }

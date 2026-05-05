@@ -46,6 +46,7 @@ export default function Sidebar({
   onSelectThread,
   onNewThread,
   onSelectDecisions,
+  onSelectDirect,
   currentRole = 'chairman',
   vpProfile = null,
   chairmanAway = null,
@@ -179,6 +180,23 @@ export default function Sidebar({
             <span style={{ fontSize: 11, color: 'var(--text-3)' }}>+ Create your first thread</span>
           </div>
         )}
+      </div>
+
+      <div className="sidebar-divider" />
+
+      {/* ── Direct Messages ── */}
+      <div className="sidebar-section">
+        <div className="sidebar-section-label">Direct</div>
+        <div
+          className={`sidebar-item ${activeView === 'direct' ? 'active' : ''}`}
+          onClick={onSelectDirect}
+        >
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#94A3B8', flexShrink: 0 }} />
+          <div className="sidebar-item-label">
+            <div>{isVp ? 'Chairman' : (vpProfile?.name || 'VP')}</div>
+            <div className="sidebar-item-sub">Private message</div>
+          </div>
+        </div>
       </div>
 
       <div className="sidebar-divider" />

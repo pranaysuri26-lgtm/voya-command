@@ -19,6 +19,9 @@ const SCHEMA = `
     timestamp TIMESTAMPTZ DEFAULT NOW()
   );
 
+  -- User-scoped conversations (added after initial launch)
+  ALTER TABLE messages ADD COLUMN IF NOT EXISTS user_id BIGINT;
+
   CREATE TABLE IF NOT EXISTS approvals (
     id BIGSERIAL PRIMARY KEY,
     agent TEXT NOT NULL,

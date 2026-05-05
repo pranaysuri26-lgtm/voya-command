@@ -66,20 +66,21 @@ function selectParticipants(topic) {
 }
 
 // MODE 1 — direct message to exactly one agent
-async function sendMessage(agent, content, taskSource = null, attachments = [], senderRole = 'chairman') {
-  const history = await db.getConversation(agent, 10)    // FIX 2: was 30
-  const recentDecisions = await db.getRecentDecisions(4) // FIX 2: was 6
+async function sendMessage(agent, content, taskSource = null, attachments = [], senderRole = 'chairman', userId = null) {
+  const userRole = senderRole === 'vp' ? 'vp' : 'chairman'
+  const history = await db.getConversation(agent, 10, userId, userRole)
+  const recentDecisions = await db.getRecentDecisions(4)
   const pendingApprovals = await db.getApprovals('pending')
 
   const { enrichedContent, imageAttachments } = embedTextAttachments(content, attachments)
   const storedSource = senderRole === 'vp' ? 'vp' : (taskSource || 'manual')
-  await db.addMessage(agent, 'chairman', enrichedContent, storedSource)
+  await db.addMessage(agent, 'chairman', enrichedContent, storedSource, userId)
 
   const vpContext = await getCurrentVpContext(senderRole)
   const response = await callAgent(agent, history, enrichedContent, recentDecisions, pendingApprovals, imageAttachments, {}, vpContext)
 
   const responseSource = taskSource === 'cto' ? 'cto_response' : 'manual'
-  await db.addMessage(agent, 'agent', response.content, responseSource)
+  await db.addMessage(agent, 'agent', response.content, responseSource, userId)
 
   const createdApprovals = []
   for (const a of response.approvals) {

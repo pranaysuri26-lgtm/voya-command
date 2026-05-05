@@ -2,19 +2,35 @@ const pool = require('./pool')
 
 // ─── Messages ─────────────────────────────────────────────────────────────────
 
-async function addMessage(agent, role, content, source = 'manual') {
+async function addMessage(agent, role, content, source = 'manual', userId = null) {
   const { rows } = await pool.query(
-    'INSERT INTO messages (agent, role, content, source) VALUES ($1,$2,$3,$4) RETURNING id',
-    [agent, role, content, source]
+    'INSERT INTO messages (agent, role, content, source, user_id) VALUES ($1,$2,$3,$4,$5) RETURNING id',
+    [agent, role, content, source, userId]
   )
   return rows[0].id
 }
 
-async function getConversation(agent, limit = 40) {
-  const { rows } = await pool.query(
-    'SELECT * FROM messages WHERE agent=$1 ORDER BY timestamp DESC LIMIT $2',
-    [agent, limit]
-  )
+// Chairman sees their own messages AND legacy messages (user_id IS NULL, created before scoping was added)
+// VP and other roles see ONLY their own messages — no cross-account visibility
+async function getConversation(agent, limit = 40, userId = null, role = 'chairman') {
+  let rows
+  if (!userId) {
+    // Unauthenticated fallback — return nothing
+    return []
+  }
+  if (role === 'chairman') {
+    // Backward-compat: chairman sees their rows + legacy unscoped rows
+    ;({ rows } = await pool.query(
+      'SELECT * FROM messages WHERE agent=$1 AND (user_id=$2 OR user_id IS NULL) ORDER BY timestamp DESC LIMIT $3',
+      [agent, userId, limit]
+    ))
+  } else {
+    // VP (and any other role) sees only their own rows
+    ;({ rows } = await pool.query(
+      'SELECT * FROM messages WHERE agent=$1 AND user_id=$2 ORDER BY timestamp DESC LIMIT $3',
+      [agent, userId, limit]
+    ))
+  }
   return rows.reverse()
 }
 

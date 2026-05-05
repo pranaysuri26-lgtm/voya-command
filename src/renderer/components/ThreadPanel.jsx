@@ -215,7 +215,7 @@ async function readFile(file) {
 
 const ACCEPTED = '.png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.ts,.tsx,.js,.jsx,.json,.css,.html'
 
-export default function ThreadPanel({ threadId, onNewApprovals, currentRole = 'chairman', vpActing = false, vpName = 'VP' }) {
+export default function ThreadPanel({ threadId, onNewApprovals, onDelete, currentRole = 'chairman', vpActing = false, vpName = 'VP' }) {
   const [thread, setThread] = useState(null)
   const [messages, setMessages] = useState([])
   const [typingAgents, setTypingAgents] = useState(new Set())
@@ -374,6 +374,20 @@ export default function ThreadPanel({ threadId, onNewApprovals, currentRole = 'c
           <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
             {thread.members.join(' · ')}
           </span>
+          {onDelete && (
+            <button
+              className="btn btn-secondary"
+              style={{ fontSize: 11, padding: '3px 9px', color: 'var(--danger)', borderColor: 'var(--danger)33' }}
+              onClick={() => {
+                if (window.confirm(`Delete thread "${thread.name}"? This cannot be undone.`)) {
+                  onDelete(threadId)
+                }
+              }}
+              title="Delete this thread"
+            >
+              🗑
+            </button>
+          )}
         </div>
       </div>
 

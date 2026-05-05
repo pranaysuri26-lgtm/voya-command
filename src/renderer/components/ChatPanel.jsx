@@ -5,7 +5,7 @@ import AgentAvatar from './AgentAvatar'
 
 // C-suite agents for @All broadcasts
 const AGENTS = ['CPO', 'CMO', 'CTO', 'CFO', 'COO']
-// All mentionable agents (includes FORGE for targeted messages)
+// All mentionable AI agents (includes FORGE for targeted messages)
 const ALL_MENTIONABLE = ['CPO', 'CMO', 'CTO', 'CFO', 'COO', 'FORGE']
 
 const AGENT_COLORS = {
@@ -16,6 +16,8 @@ const AGENT_COLORS = {
   COO: '#fbbf24',
   FORGE: '#00BCD4',
   ALL: '#6366f1',
+  VP: '#94A3B8',
+  CHAIRMAN: '#6366f1',
 }
 
 const AGENT_ROLES = {
@@ -26,6 +28,8 @@ const AGENT_ROLES = {
   COO: 'Chief Operating Officer',
   FORGE: 'AI Developer',
   ALL: 'All Executives',
+  VP: 'VP — tag in message',
+  CHAIRMAN: 'Chairman — tag in message',
 }
 
 const MENTION_RE = /@(CPO|CMO|CTO|CFO|COO|FORGE)/gi
@@ -97,6 +101,7 @@ function formatDate(ts) {
   return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
+// Only parse AI agent mentions for routing — VP/CHAIRMAN are cosmetic tags only
 function parseMentions(text) {
   const found = []
   let m
@@ -271,7 +276,7 @@ function Toast({ message, onDone }) {
   )
 }
 
-export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToBoard, currentRole = 'chairman', vpActing = false, vpName = 'VP' }) {
+export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToBoard, currentRole = 'chairman', vpActing = false, vpName = 'VP', currentUserId = null }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -305,9 +310,12 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
 
   // Listen for agent acknowledgment pushed from main after approval resolution.
   // Show inline if viewing that agent; DB write already happened so loadHistory() picks it up on next visit.
+  // Also filter by userId so VP doesn't see Chairman's live messages and vice versa.
   useEffect(() => {
     const unsub = window.voyaAPI.on('agent-acknowledgment', (data) => {
       if (data.agent !== selectedAgent) return
+      // If the broadcast carries a userId, only show it to the matching user
+      if (data.userId && currentUserId && data.userId !== currentUserId) return
       const notice = {
         id: `sys-${Date.now()}`,
         agent: data.agent,
@@ -400,7 +408,9 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
     textareaRef.current?.focus()
   }
 
-  const MENTION_OPTIONS = ['ALL', ...ALL_MENTIONABLE]
+  // Add the counterpart human to @mention options so they can be tagged
+  const humanMention = currentRole === 'vp' ? 'CHAIRMAN' : 'VP'
+  const MENTION_OPTIONS = ['ALL', ...ALL_MENTIONABLE, humanMention]
   const filteredAgents = mentionSearch !== null
     ? MENTION_OPTIONS.filter(a => a.startsWith(mentionSearch) || mentionSearch === '')
     : []
@@ -706,8 +716,8 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
             rows={1}
             placeholder={
               selectedAgent === 'ALL'
-                ? 'Message all executives… or @CPO to target one'
-                : `Message ${selectedAgent}… or @CMO @CTO to tag others`
+                ? `Message all executives… or @CPO to target one · @${humanMention} to tag`
+                : `Message ${selectedAgent}… or @CMO @CTO to tag · @${humanMention} to mention`
             }
             value={input}
             onChange={handleInputChange}

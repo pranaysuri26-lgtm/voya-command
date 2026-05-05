@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Sidebar from './components/Sidebar'
 import ChatPanel from './components/ChatPanel'
 import ThreadPanel from './components/ThreadPanel'
+import DirectPanel from './components/DirectPanel'
 import NewThreadModal from './components/NewThreadModal'
 import ApprovalInbox from './components/ApprovalInbox'
 import DecisionLog from './components/DecisionLog'
@@ -267,6 +268,19 @@ export default function App() {
     selectThread(threadId)
   }
 
+  async function handleDeleteThread(threadId) {
+    await window.voyaAPI.archiveThread(threadId)
+    const allThreads = await window.voyaAPI.getThreads()
+    setThreads(allThreads)
+    setSelectedThread(null)
+    setActiveView('chat') // return to default agent chat
+  }
+
+  function selectDirect() {
+    setActiveView('direct')
+    setSelectedThread(null)
+  }
+
   async function escalateToBoard(topic) {
     const result = await window.voyaAPI.startDiscussion(topic)
     // no-op navigation — discussions are legacy
@@ -365,6 +379,7 @@ export default function App() {
         onSelectThread={selectThread}
         onNewThread={() => setIsNewThreadModalOpen(true)}
         onSelectDecisions={() => setActiveView('decisions')}
+        onSelectDirect={selectDirect}
         currentRole={currentRole}
         vpProfile={vpProfile}
         chairmanAway={chairmanAway}
@@ -384,12 +399,14 @@ export default function App() {
             currentRole={currentRole}
             vpActing={vpActing}
             vpName={vpProfile?.name || 'VP'}
+            currentUserId={authUser?.id}
           />
         )}
         {activeView === 'thread' && selectedThread && (
           <ThreadPanel
             threadId={selectedThread}
             onNewApprovals={handleNewApprovals}
+            onDelete={handleDeleteThread}
             currentRole={currentRole}
             vpActing={vpActing}
             vpName={vpProfile?.name || 'VP'}
@@ -403,6 +420,12 @@ export default function App() {
               + New Thread
             </button>
           </div>
+        )}
+        {activeView === 'direct' && (
+          <DirectPanel
+            currentRole={currentRole}
+            vpName={vpProfile?.name || 'VP'}
+          />
         )}
         {activeView === 'decisions' && <DecisionLog />}
       </div>

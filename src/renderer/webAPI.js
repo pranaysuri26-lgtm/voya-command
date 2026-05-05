@@ -105,6 +105,7 @@ const CHANNEL_MAP = {
   'threads-updated':          'threads-updated',
   'approval-resolved':        'approval-resolved',
   'high-activity':            'high-activity',
+  'direct-message':           'direct-message',
 }
 
 // ─── Install ──────────────────────────────────────────────────────────────────
