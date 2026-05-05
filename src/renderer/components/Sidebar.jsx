@@ -220,36 +220,7 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Switch button */}
-        {isVp ? (
-          <button
-            onClick={onSwitchToChairman}
-            style={{
-              width: '100%', background: 'none', border: '1px solid var(--border)',
-              borderRadius: 6, padding: '5px 8px', cursor: 'pointer',
-              fontSize: 10, color: 'var(--text-3)', fontWeight: 600,
-              display: 'flex', alignItems: 'center', gap: 5,
-            }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-          >
-            <span style={{ color: 'var(--accent)' }}>◈</span> Back to Chairman
-          </button>
-        ) : vpProfile?.hasPin ? (
-          <button
-            onClick={onSwitchToVp}
-            style={{
-              width: '100%', background: 'none', border: '1px solid var(--border)',
-              borderRadius: 6, padding: '5px 8px', cursor: 'pointer',
-              fontSize: 10, color: 'var(--text-3)', fontWeight: 600,
-              display: 'flex', alignItems: 'center', gap: 5,
-            }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = '#94A3B8'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-          >
-            <span style={{ color: '#94A3B8' }}>▷</span> {vpName} mode
-          </button>
-        ) : null}
+        {/* VP cannot switch to Chairman — separate accounts */}
       </div>
     </div>
   )

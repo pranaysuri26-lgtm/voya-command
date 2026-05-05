@@ -149,7 +149,7 @@ function ApprovalCard({ approval, onResolve, readOnly = false }) {
 
 export default function ApprovalInbox({ approvals, onResolve, currentRole = 'chairman', vpActing = false, vpName = 'VP' }) {
   const pending = approvals.filter((a) => a.status === 'pending' || a.status === 'held')
-  const isVpNormal = currentRole === 'vp' && !vpActing
+  const isVp = currentRole === 'vp' // VP is always read-only — advisory role only
 
   if (pending.length === 0) {
     return (
@@ -163,8 +163,8 @@ export default function ApprovalInbox({ approvals, onResolve, currentRole = 'cha
 
   return (
     <div>
-      {/* VP normal mode — read-only notice */}
-      {isVpNormal && pending.length > 0 && (
+      {/* VP — always read-only, advisory only */}
+      {isVp && pending.length > 0 && (
         <div style={{
           margin: '8px 8px 4px', padding: '8px 10px',
           background: '#94A3B811', border: '1px solid #94A3B833',
@@ -172,25 +172,13 @@ export default function ApprovalInbox({ approvals, onResolve, currentRole = 'cha
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
           <span style={{ fontWeight: 700 }}>VP</span>
-          <span>You can view but not approve in normal mode. Chairman approval required.</span>
-        </div>
-      )}
-      {/* VP acting mode — authority notice */}
-      {vpActing && pending.length > 0 && (
-        <div style={{
-          margin: '8px 8px 4px', padding: '8px 10px',
-          background: '#78350f22', border: '1px solid #f59e0b33',
-          borderRadius: 6, fontSize: 11, color: '#fbbf24',
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          <span style={{ fontWeight: 700 }}>⚡ ACTING</span>
-          <span>{vpName} has full Chairman authority. Decisions tagged [VP ACTING].</span>
+          <span>Advisory view only. Chairman approves all decisions.</span>
         </div>
       )}
       {pending.map((a) =>
         a.type === 'thread_creation'
-          ? <ThreadCreationCard key={a.id} approval={a} onResolve={isVpNormal ? null : onResolve} readOnly={isVpNormal} />
-          : <ApprovalCard key={a.id} approval={a} onResolve={isVpNormal ? null : onResolve} readOnly={isVpNormal} />
+          ? <ThreadCreationCard key={a.id} approval={a} onResolve={isVp ? null : onResolve} readOnly={isVp} />
+          : <ApprovalCard key={a.id} approval={a} onResolve={isVp ? null : onResolve} readOnly={isVp} />
       )}
     </div>
   )
