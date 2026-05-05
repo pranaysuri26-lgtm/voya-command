@@ -35,12 +35,15 @@ async function getConversation(agent, limit = 40, userId = null, role = 'chairma
       [agent, userId, limit]
     ))
   } else {
-    // VP sees their own messages + autonomous agent messages (welcome briefings, proactive messages)
-    // This ensures VP sees agent activity even before initiating a conversation
+    // VP sees:
+    // 1. Their own messages and agent responses (user_id = VP's id)
+    // 2. Autonomous agent messages (welcome briefings, proactive — user_id IS NULL, role='agent')
+    // 3. Broadcast/shared messages — chairman messages sent to all or that @mention VP (source='broadcast')
     ;({ rows } = await pool.query(
       `SELECT * FROM messages WHERE agent=$1 AND (
         user_id=$2
         OR (user_id IS NULL AND role='agent')
+        OR (user_id IS NULL AND source='broadcast')
       ) ORDER BY timestamp DESC LIMIT $3`,
       [agent, userId, limit]
     ))

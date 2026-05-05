@@ -308,6 +308,27 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
     }
   }, [selectedAgent])
 
+  // Listen for shared/broadcast agent-message events from OTHER users (e.g. Chairman broadcasts @VP)
+  // isShared=true means the message was a broadcast or @mentions the other human — VP should see it
+  useEffect(() => {
+    const unsub = window.voyaAPI.on('agent-message', (data) => {
+      if (!data.isShared) return                                    // private message — ignore
+      if (data.userId === currentUserId) return                     // own message — already shown optimistically
+      if (data.agent !== selectedAgent && selectedAgent !== 'ALL') return // wrong chat view
+      setMessages(prev => {
+        if (prev.find(m => m.id === `ws-shared-${data.agent}-${data.timestamp}`)) return prev
+        return [...prev, {
+          id: `ws-shared-${data.agent}-${data.timestamp}`,
+          agent: data.agent, role: 'agent',
+          source: data.source || 'broadcast',
+          content: data.content,
+          timestamp: data.timestamp,
+        }]
+      })
+    })
+    return () => unsub?.()
+  }, [selectedAgent, currentUserId])
+
   // Listen for agent acknowledgment pushed from main after approval resolution.
   // Show inline if viewing that agent; DB write already happened so loadHistory() picks it up on next visit.
   // Also filter by userId so VP doesn't see Chairman's live messages and vice versa.
@@ -451,6 +472,7 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
     }
 
     const senderRole = currentRole === 'vp' ? 'vp' : 'chairman'
+    const isBroadcast = selectedAgent === 'ALL' || mentionedAll
 
     for (const agent of targets) {
       const optimistic = {
@@ -467,7 +489,7 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
       setThinkingAgent(agent)
 
       try {
-        const result = await window.voyaAPI.sendMessage(agent, content, attachments, senderRole)
+        const result = await window.voyaAPI.sendMessage(agent, content, attachments, senderRole, isBroadcast)
         const agentMsg = {
           id: `resp-${Date.now()}-${agent}`,
           agent, role: 'agent', content: result.content,

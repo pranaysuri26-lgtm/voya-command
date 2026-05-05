@@ -96,6 +96,7 @@ const CHANNEL_MAP = {
   'new-approval':             'new-approval',
   'discussion-update':        'discussion-update',
   'briefing-ready':           'briefing-ready',
+  'agent-message':            'agent-message',  // raw WS event — used for shared/broadcast messages
   'agent-acknowledgment':     'agent-message',
   'auto-discussion':          'auto-discussion',
   'thread-update':            'thread-update',
@@ -106,6 +107,8 @@ const CHANNEL_MAP = {
   'approval-resolved':        'approval-resolved',
   'high-activity':            'high-activity',
   'direct-message':           'direct-message',
+  'ws-connected':             'ws-connected',
+  'ws-disconnected':          'ws-disconnected',
 }
 
 // ─── Install ──────────────────────────────────────────────────────────────────
@@ -137,8 +140,8 @@ export function installWebAPI() {
     triggerWelcome:    () => POST('/agents/welcome'),
 
     // ── Direct messages ───────────────────────────────────────────────────────
-    sendMessage: (agent, content, attachments = [], senderRole = 'chairman') =>
-      POST(`/agents/${agent}/message`, { content, attachments, senderRole }),
+    sendMessage: (agent, content, attachments = [], senderRole = 'chairman', isBroadcast = false) =>
+      POST(`/agents/${agent}/message`, { content, attachments, senderRole, isBroadcast }),
     getConversation: (agent) => GET(`/agents/${agent}/conversation`),
 
     // ── Threads ───────────────────────────────────────────────────────────────

@@ -18,7 +18,7 @@ router.get('/:agent/conversation', requireAuth, async (req, res) => {
 // POST /agents/:agent/message
 router.post('/:agent/message', requireAuth, async (req, res) => {
   try {
-    const { content, attachments = [], senderRole = 'chairman' } = req.body
+    const { content, attachments = [], senderRole = 'chairman', isBroadcast = false } = req.body
     const agent = req.params.agent
 
     if (!content) return res.status(400).json({ error: 'content required' })
@@ -32,15 +32,23 @@ router.post('/:agent/message', requireAuth, async (req, res) => {
       return res.json({ content: null, approvals: [], isDirect: true })
     }
 
-    const result = await agentManager.sendMessage(agent, content, null, attachments, senderRole, req.user.id)
+    // Shared messages: broadcasts to all agents, or messages that @mention the other human user
+    // Store with userId=null so both Chairman and VP can see them in history
+    const mentionsOtherHuman = content.includes('@VP') || content.includes('@CHAIRMAN')
+    const isShared = isBroadcast || mentionsOtherHuman
+    const storageUserId = isShared ? null : req.user.id
+    const storageSource = isShared ? 'broadcast' : (senderRole === 'vp' ? 'vp' : 'manual')
 
-    // Broadcast to clients — include userId so other clients can ignore messages not their own
+    const result = await agentManager.sendMessage(agent, content, null, attachments, senderRole, storageUserId, storageSource)
+
+    // Broadcast to clients — isShared=true lets VP's client display it regardless of userId filter
     broadcast.broadcast('agent-message', {
       agent,
       userId: req.user.id,
+      isShared,
       content: result.content,
       role: 'agent',
-      source: 'manual',
+      source: storageSource,
       timestamp: new Date().toISOString(),
     })
 
