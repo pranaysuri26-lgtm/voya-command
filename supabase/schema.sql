@@ -274,10 +274,7 @@ CREATE INDEX idx_onboarding_user_id           ON onboarding_responses(user_id);
 CREATE INDEX idx_onboarding_session_id        ON onboarding_responses(session_id);
 CREATE INDEX idx_user_trips_user_id           ON user_trips(user_id);
 CREATE INDEX idx_user_trips_status            ON user_trips(user_id, status);
-CREATE INDEX idx_rec_sessions_user_id         ON recommendation_sessions(user_id);
-CREATE INDEX idx_recommendations_session      ON recommendations(session_id);
-CREATE INDEX idx_recommendations_position     ON recommendations(session_id, position);
-CREATE INDEX idx_itineraries_rec              ON itineraries(recommendation_id);
+CREATE INDEX idx_itineraries_user             ON itineraries(user_id);
 CREATE INDEX idx_passport_stamps_user_id      ON passport_stamps(user_id);
 CREATE INDEX idx_destinations_region          ON destinations(region);
 CREATE INDEX idx_destinations_gem_score       ON destinations(hidden_gem_score DESC);
@@ -292,7 +289,7 @@ ALTER TABLE profiles              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscriptions         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE onboarding_responses  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_trips            ENABLE ROW LEVEL SECURITY;
-ALTER TABLE recommendation_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE past_trips            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recommendations       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE itineraries           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE passport_stamps       ENABLE ROW LEVEL SECURITY;
@@ -314,18 +311,13 @@ CREATE POLICY "onboarding_own"
 CREATE POLICY "trips_own"
   ON user_trips FOR ALL USING (auth.uid() = user_id);
 
--- Recommendation sessions: full access to own
-CREATE POLICY "rec_sessions_own"
-  ON recommendation_sessions FOR ALL USING (auth.uid() = user_id);
+-- Past trips: full access to own rows
+CREATE POLICY "past_trips_own"
+  ON past_trips FOR ALL USING (auth.uid() = user_id);
 
--- Recommendations: read own sessions' recommendations
+-- Recommendations: read/write own row only (one row per user)
 CREATE POLICY "recs_own"
-  ON recommendations FOR SELECT
-  USING (
-    session_id IN (
-      SELECT id FROM recommendation_sessions WHERE user_id = auth.uid()
-    )
-  );
+  ON recommendations FOR ALL USING (auth.uid() = user_id);
 
 -- Itineraries: full access to own
 CREATE POLICY "itineraries_own"
