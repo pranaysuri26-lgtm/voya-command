@@ -215,15 +215,17 @@ export default function ApprovalInbox({ approvals, onResolve, currentRole = 'cha
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
           <span style={{ fontWeight: 700 }}>VP</span>
-          <span>You can approve internal & staging decisions. Customer-facing decisions require Chairman.</span>
+          <span>You can approve internal & staging decisions and create any threads. Customer-facing decisions require Chairman.</span>
         </div>
       )}
       {pending.map((a) => {
         const customerFacing = isCustomerFacing(a)
         const vpReadOnly = isVp && customerFacing
         const vpCanApprove = isVp && !customerFacing
+        // VP can ALWAYS create threads — threads are just conversation channels, not decision approvals
+        const vpCanCreateThread = isVp
         return a.type === 'thread_creation'
-          ? <ThreadCreationCard key={a.id} approval={a} onResolve={vpReadOnly ? null : onResolve} readOnly={vpReadOnly} vpCanApprove={vpCanApprove} />
+          ? <ThreadCreationCard key={a.id} approval={a} onResolve={onResolve} readOnly={false} vpCanApprove={vpCanCreateThread} />
           : <ApprovalCard key={a.id} approval={a} onResolve={vpReadOnly ? null : onResolve} readOnly={vpReadOnly} vpCanApprove={vpCanApprove} />
       })}
     </div>

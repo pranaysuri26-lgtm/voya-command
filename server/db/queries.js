@@ -18,6 +18,16 @@ async function getConversation(agent, limit = 40, userId = null, role = 'chairma
     // Unauthenticated fallback — return nothing
     return []
   }
+
+  // VP_DIRECT is a shared DM channel — no user scoping, both users see all messages
+  if (agent === 'VP_DIRECT') {
+    ;({ rows } = await pool.query(
+      'SELECT * FROM messages WHERE agent=$1 ORDER BY timestamp DESC LIMIT $2',
+      [agent, limit]
+    ))
+    return rows.reverse()
+  }
+
   if (role === 'chairman') {
     // Backward-compat: chairman sees their rows + legacy unscoped rows
     ;({ rows } = await pool.query(
@@ -25,9 +35,13 @@ async function getConversation(agent, limit = 40, userId = null, role = 'chairma
       [agent, userId, limit]
     ))
   } else {
-    // VP (and any other role) sees only their own rows
+    // VP sees their own messages + autonomous agent messages (welcome briefings, proactive messages)
+    // This ensures VP sees agent activity even before initiating a conversation
     ;({ rows } = await pool.query(
-      'SELECT * FROM messages WHERE agent=$1 AND user_id=$2 ORDER BY timestamp DESC LIMIT $3',
+      `SELECT * FROM messages WHERE agent=$1 AND (
+        user_id=$2
+        OR (user_id IS NULL AND role='agent')
+      ) ORDER BY timestamp DESC LIMIT $3`,
       [agent, userId, limit]
     ))
   }
