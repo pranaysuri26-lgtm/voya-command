@@ -46,6 +46,8 @@ function connectWS() {
       _wsReady = true
       for (const fn of _wsQueue) fn()
       _wsQueue = []
+      // Notify app that WS is connected
+      for (const cb of (_wsListeners['ws-connected'] || [])) cb({})
 
       // Send a keepalive ping every 20s to prevent Railway proxy from
       // closing idle WebSocket connections
@@ -69,6 +71,8 @@ function connectWS() {
     _ws.onclose = () => {
       _wsReady = false
       if (_keepaliveTimer) { clearInterval(_keepaliveTimer); _keepaliveTimer = null }
+      // Notify app that WS dropped
+      for (const cb of (_wsListeners['ws-disconnected'] || [])) cb({})
       if (_token) setTimeout(connectWS, 3000)
     }
 

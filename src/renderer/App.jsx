@@ -31,6 +31,7 @@ export default function App() {
   const [rightTab, setRightTab] = useState('inbox')
   const [oversightUnread, setOversightUnread] = useState(false)
   const [activityNotice, setActivityNotice] = useState(null) // high-activity toast
+  const [wsConnected, setWsConnected] = useState(true) // WS connection status
 
   // VP state
   const [currentRole, setCurrentRole] = useState('chairman') // 'chairman' | 'vp'
@@ -122,6 +123,16 @@ export default function App() {
   }
 
   function registerListeners() {
+    // ── Keep Railway service awake + track WS connection ──────────────────────
+    // Ping /health every 4 min so Railway doesn't sleep the service
+    setInterval(() => {
+      fetch('/health').catch(() => {})
+    }, 4 * 60 * 1000)
+
+    // Monitor WS connect/disconnect to show reconnecting banner
+    window.voyaAPI.on('ws-connected',    () => setWsConnected(true))
+    window.voyaAPI.on('ws-disconnected', () => setWsConnected(false))
+
     window.voyaAPI.on('new-approval', (approval) => {
       setApprovals((prev) => {
         if (prev.find((a) => a.id === approval.id)) return prev
@@ -309,6 +320,18 @@ export default function App() {
           onClose={() => setIsNewThreadModalOpen(false)}
           onCreate={handleThreadCreated}
         />
+      )}
+
+      {/* Reconnecting banner — shown when WS drops */}
+      {!wsConnected && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+          background: '#92400e', color: '#fef3c7',
+          fontSize: 12, fontWeight: 600, textAlign: 'center',
+          padding: '6px 0', letterSpacing: '0.02em',
+        }}>
+          ⟳ Reconnecting…
+        </div>
       )}
 
       {/* Chairman Away banner — full width, always on top */}
