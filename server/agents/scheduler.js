@@ -50,7 +50,7 @@ const AGENT_PULSE_TASKS = {
     'Quick tech health check: any architectural decisions that need revisiting before launch?',
     'What is the one technical risk that could delay launch? Be specific.',
     'Share your current take on AI model costs — are we within the $0.08/session ceiling?',
-    'What is FORGE working on and where might we need more spec clarity?',
+    'What is the next architectural decision that needs to be made before launch?',
   ],
   CFO: [
     'Quick burn check: what are our top 3 cost drivers right now and are any trending wrong?',

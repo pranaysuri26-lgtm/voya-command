@@ -15,7 +15,6 @@ import VPSetupModal from './components/VPSetupModal'
 import VPModeGate from './components/VPModeGate'
 import ReturnSummaryModal from './components/ReturnSummaryModal'
 import LoginScreen from './components/LoginScreen'
-import ForgeBuildsPanel from './components/ForgeBuildsPanel'
 import ReviewPanel from './components/ReviewPanel'
 
 // ─── Token persistence (localStorage) ───────────────────────────────────────
@@ -39,7 +38,6 @@ export default function App() {
   const [activityNotice, setActivityNotice] = useState(null) // high-activity toast
   const [wsConnected, setWsConnected] = useState(true) // WS connection status
   const [archivedThreads, setArchivedThreads] = useState([])
-  const [forgeBuildsUnread, setForgeBuildsUnread] = useState(false)
 
   // VP state
   const [currentRole, setCurrentRole] = useState('chairman') // 'chairman' | 'vp'
@@ -216,13 +214,6 @@ export default function App() {
       setTimeout(() => setActivityNotice(null), 8000)
     })
 
-    // FORGE new build notification
-    window.voyaAPI.on('forge-build', () => {
-      setActiveView(v => {
-        if (v !== 'forge-builds') setForgeBuildsUnread(true)
-        return v
-      })
-    })
   }
 
   function handleNewApprovals(newApprovals) {
@@ -349,11 +340,6 @@ export default function App() {
     setSelectedThread(null)
   }
 
-  function selectForgeBuilds() {
-    setActiveView('forge-builds')
-    setSelectedThread(null)
-    setForgeBuildsUnread(false)
-  }
 
   async function escalateToBoard(topic) {
     const result = await window.voyaAPI.startDiscussion(topic)
@@ -459,8 +445,6 @@ export default function App() {
         onSelectDirect={selectDirect}
         onSelectTasks={selectTasks}
         onSelectBrief={selectBrief}
-        onSelectForgeBuilds={selectForgeBuilds}
-        forgeBuildsUnread={forgeBuildsUnread}
         onUnarchiveThread={handleUnarchiveThread}
         onLogout={handleLogout}
         currentRole={currentRole}
@@ -518,11 +502,6 @@ export default function App() {
             onClose={() => setActiveView('chat')}
             onSelectAgent={selectAgent}
             onViewTasks={selectTasks}
-          />
-        )}
-        {activeView === 'forge-builds' && (
-          <ForgeBuildsPanel
-            onNewBuildEvent={() => {/* already handled via WS listener */}}
           />
         )}
         {activeView === 'review' && <ReviewPanel />}

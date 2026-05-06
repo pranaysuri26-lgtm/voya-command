@@ -124,21 +124,6 @@ async function persistAgentTasks(agent, tasks) {
   return created
 }
 
-// ─── Save FORGE build files to DB ─────────────────────────────────────────────
-async function saveForgeBuilds(builds, summary, taskDescription) {
-  const sessionId = randomUUID()
-  const saved = []
-  for (const b of builds) {
-    try {
-      const row = await db.createForgeBuild(sessionId, taskDescription?.slice(0, 200) || summary || null, b.filename, b.language, b.content)
-      saved.push(row)
-    } catch (err) {
-      console.error('[FORGE] Failed to save build:', b.filename, err.message)
-    }
-  }
-  console.log(`[FORGE] Saved ${saved.length} build file(s) — session ${sessionId}`)
-  return saved
-}
 
 // MODE 1 — direct message to exactly one agent
 async function sendMessage(agent, content, taskSource = null, attachments = [], senderRole = 'chairman', userId = null, overrideSource = null) {
@@ -189,25 +174,11 @@ async function sendMessage(agent, content, taskSource = null, attachments = [], 
   // Persist any tasks the agent proposed
   const createdTasks = await persistAgentTasks(agent, response.tasks)
 
-  // Save FORGE builds and broadcast
-  let forgeBuilds = []
-  if (agent === 'FORGE' && response.builds?.length > 0) {
-    forgeBuilds = await saveForgeBuilds(response.builds, response.buildSummary, content)
-    if (forgeBuilds.length > 0) {
-      broadcast.broadcast('forge-build', {
-        sessionId: forgeBuilds[0].session_id,
-        files: forgeBuilds.map(b => ({ id: b.id, filename: b.filename, language: b.language })),
-        summary: response.buildSummary || `FORGE built ${forgeBuilds.length} file${forgeBuilds.length > 1 ? 's' : ''}`,
-      })
-    }
-  }
-
   return {
     content: response.content,
     approvals: createdApprovals,
     tasks: createdTasks,
     openDiscussion: response.openDiscussion || null,
-    forgeBuilds,
   }
 }
 
@@ -325,7 +296,7 @@ async function openDiscussionFromAgent(topic, reason, triggerAgent) {
   return { discussionId, topic, participants, reason, triggerAgent }
 }
 
-const AGENT_MENTION_RE = /@(CPO|CMO|CTO|CFO|COO|FORGE)/g
+const AGENT_MENTION_RE = /@(CPO|CMO|CTO|CFO|COO)/g
 function extractMentions(content, members, sender) {
   const mentioned = new Set()
   const aiMembers = members.filter(m => !HUMAN_MEMBERS.has(m))
@@ -372,19 +343,6 @@ async function _runOneAgent(agent, thread, history, recentDecisions, attachments
       status: 'pending',
       proposed_at: new Date().toISOString(),
     })
-  }
-
-  // Save FORGE builds from thread response
-  if (agent === 'FORGE' && result.builds?.length > 0) {
-    const forgeBuilds = await saveForgeBuilds(result.builds, result.buildSummary, `Thread: ${thread.name}`)
-    if (forgeBuilds.length > 0) {
-      broadcast.broadcast('forge-build', {
-        sessionId: forgeBuilds[0].session_id,
-        threadId: thread.id,
-        files: forgeBuilds.map(b => ({ id: b.id, filename: b.filename, language: b.language })),
-        summary: result.buildSummary || `FORGE built ${forgeBuilds.length} file${forgeBuilds.length > 1 ? 's' : ''}`,
-      })
-    }
   }
 
   onUpdate({

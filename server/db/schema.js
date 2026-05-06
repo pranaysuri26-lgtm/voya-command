@@ -143,8 +143,8 @@ async function runMigrations() {
     const { rows } = await client.query('SELECT COUNT(*) as count FROM threads')
     if (parseInt(rows[0].count) === 0) {
       const seeds = [
-        { name: 'Board Room', members: ['CPO','CMO','CTO','CFO','COO','FORGE'], pinned: 1 },
-        { name: 'Engineering',  members: ['CTO','FORGE'], pinned: 1 },
+        { name: 'Board Room', members: ['CPO','CMO','CTO','CFO','COO'], pinned: 1 },
+        { name: 'Engineering',  members: ['CTO','COO'], pinned: 1 },
         { name: 'Growth',       members: ['CMO','CPO'],   pinned: 0 },
         { name: 'Finance Review', members: ['CFO','COO'], pinned: 0 },
       ]

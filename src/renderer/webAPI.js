@@ -116,7 +116,6 @@ const CHANNEL_MAP = {
   'ws-connected':             'ws-connected',
   'ws-disconnected':          'ws-disconnected',
   'task-update':              'task-update',
-  'forge-build':              'forge-build',
 }
 
 // ─── Install ──────────────────────────────────────────────────────────────────
@@ -221,11 +220,6 @@ export function installWebAPI() {
     // ── App review ────────────────────────────────────────────────────────────
     reviewApp: () => POST('/review/app'),
 
-    // ── FORGE builds ──────────────────────────────────────────────────────────
-    getForgeBuilds:      ()         => GET('/forge/builds'),
-    getForgeBuildFiles:  (sessionId)=> GET(`/forge/builds/${sessionId}`),
-    forgePreviewUrl:     (id)       => `/forge/preview/${id}`,
-    updateForgeBuildStatus: (id, status) => PATCH(`/forge/builds/${id}/status`, { status }),
 
     // ── Electron-only stubs (not available in browser) ────────────────────────
     takeScreenshot:  () => Promise.reject(new Error('Screenshots not available in browser')),

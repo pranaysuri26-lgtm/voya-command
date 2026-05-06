@@ -5,8 +5,7 @@ import AgentAvatar from './AgentAvatar'
 
 // C-suite agents for @All broadcasts
 const AGENTS = ['CPO', 'CMO', 'CTO', 'CFO', 'COO']
-// All mentionable AI agents (includes FORGE for targeted messages)
-const ALL_MENTIONABLE = ['CPO', 'CMO', 'CTO', 'CFO', 'COO', 'FORGE']
+const ALL_MENTIONABLE = ['CPO', 'CMO', 'CTO', 'CFO', 'COO']
 
 const AGENT_COLORS = {
   CPO: '#818cf8',
@@ -14,7 +13,6 @@ const AGENT_COLORS = {
   CTO: '#22d3ee',
   CFO: '#34d399',
   COO: '#fbbf24',
-  FORGE: '#00BCD4',
   ALL: '#6366f1',
   VP: '#94A3B8',
   CHAIRMAN: '#6366f1',
@@ -26,13 +24,12 @@ const AGENT_ROLES = {
   CTO: 'Chief Technology Officer',
   CFO: 'Chief Financial Officer',
   COO: 'Chief Operating Officer',
-  FORGE: 'AI Developer',
   ALL: 'All Executives',
   VP: 'VP — tag in message',
   CHAIRMAN: 'Chairman — tag in message',
 }
 
-const MENTION_RE = /@(CPO|CMO|CTO|CFO|COO|FORGE)/gi
+const MENTION_RE = /@(CPO|CMO|CTO|CFO|COO)/gi
 const ACCEPTED = '.png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.ts,.tsx,.js,.jsx,.json,.css,.html'
 
 function fileIcon(type = '') {
@@ -105,7 +102,7 @@ function formatDate(ts) {
 function parseMentions(text) {
   const found = []
   let m
-  const re = /@(All|CPO|CMO|CTO|CFO|COO|FORGE)/gi
+  const re = /@(All|CPO|CMO|CTO|CFO|COO)/gi
   while ((m = re.exec(text)) !== null) {
     const upper = m[1].toUpperCase()
     if (!found.includes(upper)) found.push(upper)

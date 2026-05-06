@@ -5,12 +5,12 @@ const CSUITE = ['CPO', 'CMO', 'CTO', 'CFO', 'COO']
 
 const AGENT_ROLES = {
   CPO: 'Product', CMO: 'Marketing', CTO: 'Technology',
-  CFO: 'Finance', COO: 'Operations', FORGE: 'AI Developer',
+  CFO: 'Finance', COO: 'Operations',
 }
 
 const AGENT_COLORS = {
   CPO: '#818cf8', CMO: '#f472b6', CTO: '#22d3ee',
-  CFO: '#34d399', COO: '#fbbf24', FORGE: '#00BCD4',
+  CFO: '#34d399', COO: '#fbbf24',
 }
 
 function MemberDots({ members, max = 4 }) {
@@ -38,8 +38,6 @@ function MemberDots({ members, max = 4 }) {
 export default function Sidebar({
   onSelectTasks,
   onSelectBrief,
-  onSelectForgeBuilds,
-  forgeBuildsUnread = false,
   activeView,
   selectedAgent,
   selectedThread,
@@ -106,19 +104,6 @@ export default function Sidebar({
               </div>
             </div>
 
-            {agent === 'CTO' && (
-              <div
-                className={`sidebar-item sidebar-item-sub-agent ${activeView === 'chat' && selectedAgent === 'FORGE' ? 'active' : ''}`}
-                onClick={() => onSelectAgent('FORGE')}
-              >
-                <div className="sidebar-sub-connector" />
-                <div className="agent-dot" style={{ background: AGENT_COLORS.FORGE, width: 6, height: 6 }} />
-                <div className="sidebar-item-label">
-                  <div style={{ fontSize: 12 }}>FORGE</div>
-                  <div className="sidebar-item-sub">AI Developer</div>
-                </div>
-              </div>
-            )}
           </div>
         ))}
       </div>
@@ -278,21 +263,6 @@ export default function Sidebar({
         >
           <span style={{ color: 'var(--text-3)', fontSize: 13 }}>▤</span>
           <div className="sidebar-item-label">Decision Log</div>
-        </div>
-        <div
-          className={`sidebar-item ${activeView === 'forge-builds' ? 'active' : ''}`}
-          onClick={onSelectForgeBuilds}
-        >
-          <span style={{ color: forgeBuildsUnread ? '#00BCD4' : 'var(--text-3)', fontSize: 13 }}>🔨</span>
-          <div className="sidebar-item-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>Builds</span>
-            {forgeBuildsUnread && (
-              <span style={{
-                fontSize: 8, fontWeight: 800, background: '#00BCD4',
-                color: '#fff', borderRadius: 4, padding: '1px 4px', lineHeight: '12px',
-              }}>NEW</span>
-            )}
-          </div>
         </div>
       </div>
 

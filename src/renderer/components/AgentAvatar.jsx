@@ -4,7 +4,6 @@ const COLORS = {
   CTO: '#22d3ee',
   CFO: '#34d399',
   COO: '#fbbf24',
-  FORGE: '#00BCD4',
   ALL: '#6366f1',
   CHAIRMAN: '#4f46e5',
 }
