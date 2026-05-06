@@ -16,6 +16,7 @@ import VPModeGate from './components/VPModeGate'
 import ReturnSummaryModal from './components/ReturnSummaryModal'
 import LoginScreen from './components/LoginScreen'
 import ForgeBuildsPanel from './components/ForgeBuildsPanel'
+import ReviewPanel from './components/ReviewPanel'
 
 // ─── Token persistence (localStorage) ───────────────────────────────────────
 const TOKEN_KEY = 'voya_auth_token'
@@ -314,14 +315,8 @@ export default function App() {
     setArchivedThreads(archived || [])
   }
 
-  async function handleReviewApp() {
-    try {
-      // Switch to ALL agents view so user can watch reviews stream in
-      selectAgent('ALL')
-      await window.voyaAPI.reviewApp()
-    } catch (err) {
-      console.error('[Review] failed to start:', err)
-    }
+  function handleReviewApp() {
+    setActiveView('review')
   }
 
   function handleLogout() {
@@ -530,6 +525,7 @@ export default function App() {
             onNewBuildEvent={() => {/* already handled via WS listener */}}
           />
         )}
+        {activeView === 'review' && <ReviewPanel />}
       </div>
 
       {/* ── Right panel ── */}

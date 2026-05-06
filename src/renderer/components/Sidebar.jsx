@@ -339,14 +339,19 @@ export default function Sidebar({
           <button
             onClick={onReviewApp}
             style={{
-              width: '100%', background: 'none', border: '1px solid var(--accent)44',
+              width: '100%',
+              background: activeView === 'review' ? 'var(--accent)22' : 'none',
+              border: `1px solid ${activeView === 'review' ? 'var(--accent)88' : 'var(--accent)44'}`,
               borderRadius: 6, color: 'var(--accent)', fontSize: 10,
               fontWeight: 600, padding: '5px 0', cursor: 'pointer',
               letterSpacing: '0.04em', marginBottom: 4,
               transition: 'background 0.15s, border-color 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent)11'; e.currentTarget.style.borderColor = 'var(--accent)88' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'var(--accent)44' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent)22'; e.currentTarget.style.borderColor = 'var(--accent)88' }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = activeView === 'review' ? 'var(--accent)22' : 'none'
+              e.currentTarget.style.borderColor = activeView === 'review' ? 'var(--accent)88' : 'var(--accent)44'
+            }}
           >
             🔍 Review App
           </button>
