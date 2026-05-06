@@ -310,6 +310,10 @@ export default function App() {
     setActiveView('review')
   }
 
+  function handleBoardBrief() {
+    setActiveView('brief-panel')
+  }
+
   function handleLogout() {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
@@ -455,6 +459,7 @@ export default function App() {
         onOpenVpSetup={() => setShowVpSetup(true)}
         onOpenAwayModal={() => setShowAwayModal(true)}
         onReviewApp={handleReviewApp}
+        onBoardBrief={handleBoardBrief}
       />
 
       {/* ── Main content ── */}
@@ -504,7 +509,8 @@ export default function App() {
             onViewTasks={selectTasks}
           />
         )}
-        {activeView === 'review' && <ReviewPanel />}
+        {activeView === 'review'      && <ReviewPanel />}
+        {activeView === 'brief-panel' && <ReviewPanel initialMode="brief" />}
       </div>
 
       {/* ── Right panel ── */}

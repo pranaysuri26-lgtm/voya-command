@@ -179,6 +179,46 @@ function start() {
     }
   })
 
+  // ── Weekly board brief — Monday 8am ──────────────────────────────────────
+  // Each agent surfaces their #1 unprompted concern for the week.
+  // Broadcasts via brief-* WS events so the hub panel picks it up.
+  cron.schedule('0 8 * * 1', async () => {
+    try {
+      console.log('[Scheduler] Running weekly board brief...')
+      const agents   = ['CPO', 'CMO', 'CTO', 'CFO', 'COO']
+      const broadcast = require('../ws/broadcast')
+      const { BRIEF_PROMPTS, BRIEF_APP_CONTEXT } = require('./boardBriefPrompts')
+
+      broadcast.broadcast('brief-started', {
+        message: 'Weekly board brief — each executive surfacing their top unprompted concern',
+        agents,
+        timestamp: new Date().toISOString(),
+        auto: true,
+      })
+
+      await Promise.allSettled(
+        agents.map(async (agent) => {
+          try {
+            broadcast.broadcast('brief-agent-thinking', { agent, timestamp: new Date().toISOString() })
+            const prompt = `${BRIEF_APP_CONTEXT}\n\n---\n\n${BRIEF_PROMPTS[agent]}`
+            const result = await agentManager.sendMessage(agent, prompt, 'brief', [], 'chairman', null, 'brief')
+            broadcast.broadcast('agent-message', {
+              agent, content: result.content, role: 'agent',
+              source: 'brief', isShared: true, timestamp: new Date().toISOString(),
+            })
+          } catch (err) {
+            console.error(`[BoardBrief] ${agent} failed:`, err.message)
+          }
+        })
+      )
+
+      broadcast.broadcast('brief-complete', { message: 'Weekly board brief complete.', auto: true, timestamp: new Date().toISOString() })
+    } catch (err) {
+      console.error('[Scheduler] Weekly board brief failed:', err.message)
+    }
+  })
+  console.log('[Scheduler] Weekly board brief registered (Monday 8am)')
+
   console.log('[Scheduler] Cron jobs registered')
 }
 

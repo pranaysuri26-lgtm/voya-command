@@ -61,6 +61,7 @@ export default function Sidebar({
   onOpenVpSetup,
   onOpenAwayModal,
   onReviewApp,
+  onBoardBrief,
 }) {
   const [archivedExpanded, setArchivedExpanded] = useState(false)
   const isVp = currentRole === 'vp'
@@ -324,6 +325,29 @@ export default function Sidebar({
             }}
           >
             🔍 Review App
+          </button>
+        )}
+
+        {/* Board Brief */}
+        {onBoardBrief && (
+          <button
+            onClick={onBoardBrief}
+            style={{
+              width: '100%',
+              background: activeView === 'brief-panel' ? '#f4724222' : 'none',
+              border: `1px solid ${activeView === 'brief-panel' ? '#f4724288' : '#f4724244'}`,
+              borderRadius: 6, color: '#f47242', fontSize: 10,
+              fontWeight: 600, padding: '5px 0', cursor: 'pointer',
+              letterSpacing: '0.04em', marginBottom: 4,
+              transition: 'background 0.15s, border-color 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#f4724222'; e.currentTarget.style.borderColor = '#f4724288' }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = activeView === 'brief-panel' ? '#f4724222' : 'none'
+              e.currentTarget.style.borderColor = activeView === 'brief-panel' ? '#f4724288' : '#f4724244'
+            }}
+          >
+            📋 Board Brief
           </button>
         )}
 

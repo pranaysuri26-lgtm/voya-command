@@ -102,6 +102,10 @@ const CHANNEL_MAP = {
   'review-started':           'review-started',
   'review-agent-thinking':    'review-agent-thinking',
   'review-complete':          'review-complete',
+  'brief-started':            'brief-started',
+  'brief-agent-thinking':     'brief-agent-thinking',
+  'brief-agent-error':        'brief-agent-error',
+  'brief-complete':           'brief-complete',
   'agent-message':            'agent-message',  // raw WS event — used for shared/broadcast messages
   'agent-acknowledgment':     'agent-message',
   'auto-discussion':          'auto-discussion',
@@ -218,7 +222,8 @@ export function installWebAPI() {
     getVpActingDecisions: ()        => GET('/oversight/decisions?q=').catch(() => []),
 
     // ── App review ────────────────────────────────────────────────────────────
-    reviewApp: () => POST('/review/app'),
+    reviewApp:   () => POST('/review/app'),
+    boardBrief:  () => POST('/boardbrief/weekly'),
 
 
     // ── Electron-only stubs (not available in browser) ────────────────────────
