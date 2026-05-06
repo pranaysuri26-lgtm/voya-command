@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 const AGENTS = ['CPO', 'CMO', 'CTO', 'CFO', 'COO']
 
@@ -8,6 +8,63 @@ const AGENT_META = {
   CTO: { label: 'Chief Technology Officer',emoji: '⚙️',  color: '#34d399' },
   CFO: { label: 'Chief Financial Officer', emoji: '💰', color: '#fbbf24' },
   COO: { label: 'Chief Operating Officer', emoji: '🗂️',  color: '#60a5fa' },
+}
+
+function CopyButton({ text, color }) {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      title="Copy review"
+      style={{
+        background: copied ? color + '22' : 'none',
+        border: `1px solid ${copied ? color + '66' : 'var(--border)'}`,
+        borderRadius: 5, padding: '3px 8px',
+        cursor: 'pointer', fontSize: 10, fontWeight: 600,
+        color: copied ? color : 'var(--text-3)',
+        letterSpacing: '0.04em',
+        transition: 'all 0.15s',
+        flexShrink: 0,
+      }}
+    >
+      {copied ? '✓ Copied' : 'Copy'}
+    </button>
+  )
+}
+
+function CopyAllButton({ onCopy }) {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    onCopy()
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      style={{
+        background: copied ? '#ffffff11' : 'none',
+        border: '1px solid var(--border)',
+        borderRadius: 6, padding: '5px 10px',
+        cursor: 'pointer', fontSize: 10, fontWeight: 600,
+        color: copied ? 'var(--text-1)' : 'var(--text-3)',
+        letterSpacing: '0.04em',
+        transition: 'all 0.15s',
+      }}
+    >
+      {copied ? '✓ All copied' : 'Copy all'}
+    </button>
+  )
 }
 
 function AgentReviewCard({ agent, status, content }) {
@@ -39,15 +96,18 @@ function AgentReviewCard({ agent, status, content }) {
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)' }}>{agent}</div>
           <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{meta.label}</div>
         </div>
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em' }}>
-          {isPending  && <span style={{ color: 'var(--text-3)' }}>WAITING</span>}
-          {isThinking && (
-            <span style={{ color: meta.color }}>
-              THINKING
-              <span style={{ display: 'inline-block', animation: 'ellipsis 1.4s steps(4, end) infinite' }}>...</span>
-            </span>
-          )}
-          {isDone && <span style={{ color: meta.color }}>DONE ✓</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {isDone && content && <CopyButton text={`${agent} — ${meta.label}\n\n${content}`} color={meta.color} />}
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em' }}>
+            {isPending  && <span style={{ color: 'var(--text-3)' }}>WAITING</span>}
+            {isThinking && (
+              <span style={{ color: meta.color }}>
+                THINKING
+                <span style={{ display: 'inline-block', animation: 'ellipsis 1.4s steps(4, end) infinite' }}>...</span>
+              </span>
+            )}
+            {isDone && <span style={{ color: meta.color }}>DONE ✓</span>}
+          </div>
         </div>
       </div>
 
@@ -137,6 +197,14 @@ export default function ReviewPanel({ onTriggerReview }) {
 
   const doneCount = Object.values(agentStatus).filter(s => s === 'done').length
 
+  function copyAll() {
+    const text = AGENTS
+      .filter(a => agentContent[a])
+      .map(a => `=== ${a} — ${AGENT_META[a].label} ===\n\n${agentContent[a]}`)
+      .join('\n\n\n')
+    navigator.clipboard.writeText(text)
+  }
+
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', height: '100%',
@@ -159,7 +227,11 @@ export default function ReviewPanel({ onTriggerReview }) {
             {phase === 'done'    && `Review complete — ${doneCount}/5 responses`}
           </div>
         </div>
-        {(phase === 'idle' || phase === 'done') && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {phase === 'done' && doneCount > 0 && (
+            <CopyAllButton onCopy={copyAll} />
+          )}
+          {(phase === 'idle' || phase === 'done') && (
           <button
             onClick={startReview}
             style={{
@@ -175,15 +247,16 @@ export default function ReviewPanel({ onTriggerReview }) {
             {phase === 'done' ? '↺ Re-review' : 'Start Review'}
           </button>
         )}
-        {phase === 'running' && (
-          <div style={{
-            fontSize: 10, color: 'var(--accent)', fontWeight: 700,
-            letterSpacing: '0.06em',
-            animation: 'pulse 1.5s ease-in-out infinite',
-          }}>
-            LIVE
-          </div>
-        )}
+          {phase === 'running' && (
+            <div style={{
+              fontSize: 10, color: 'var(--accent)', fontWeight: 700,
+              letterSpacing: '0.06em',
+              animation: 'pulse 1.5s ease-in-out infinite',
+            }}>
+              LIVE
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Cards ── */}
