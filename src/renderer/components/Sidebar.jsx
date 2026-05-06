@@ -62,6 +62,7 @@ export default function Sidebar({
   onSwitchToChairman,
   onOpenVpSetup,
   onOpenAwayModal,
+  onReviewApp,
 }) {
   const [archivedExpanded, setArchivedExpanded] = useState(false)
   const isVp = currentRole === 'vp'
@@ -332,6 +333,24 @@ export default function Sidebar({
         </div>
 
         {/* VP cannot switch to Chairman — separate accounts */}
+
+        {/* Review App */}
+        {onReviewApp && (
+          <button
+            onClick={onReviewApp}
+            style={{
+              width: '100%', background: 'none', border: '1px solid var(--accent)44',
+              borderRadius: 6, color: 'var(--accent)', fontSize: 10,
+              fontWeight: 600, padding: '5px 0', cursor: 'pointer',
+              letterSpacing: '0.04em', marginBottom: 4,
+              transition: 'background 0.15s, border-color 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent)11'; e.currentTarget.style.borderColor = 'var(--accent)88' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'var(--accent)44' }}
+          >
+            🔍 Review App
+          </button>
+        )}
 
         {/* Logout */}
         <button

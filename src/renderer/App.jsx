@@ -314,6 +314,16 @@ export default function App() {
     setArchivedThreads(archived || [])
   }
 
+  async function handleReviewApp() {
+    try {
+      // Switch to ALL agents view so user can watch reviews stream in
+      selectAgent('ALL')
+      await window.voyaAPI.reviewApp()
+    } catch (err) {
+      console.error('[Review] failed to start:', err)
+    }
+  }
+
   function handleLogout() {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
@@ -465,6 +475,7 @@ export default function App() {
         onSwitchToChairman={handleSwitchToChairman}
         onOpenVpSetup={() => setShowVpSetup(true)}
         onOpenAwayModal={() => setShowAwayModal(true)}
+        onReviewApp={handleReviewApp}
       />
 
       {/* ── Main content ── */}

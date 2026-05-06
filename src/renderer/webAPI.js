@@ -99,6 +99,9 @@ const CHANNEL_MAP = {
   'new-approval':             'new-approval',
   'discussion-update':        'discussion-update',
   'briefing-ready':           'briefing-ready',
+  'review-started':           'review-started',
+  'review-agent-thinking':    'review-agent-thinking',
+  'review-complete':          'review-complete',
   'agent-message':            'agent-message',  // raw WS event — used for shared/broadcast messages
   'agent-acknowledgment':     'agent-message',
   'auto-discussion':          'auto-discussion',
@@ -214,6 +217,9 @@ export function installWebAPI() {
     setChairmanAway:  (returnDate, note) => POST('/vp/away', { returnDate, note }),
     clearChairmanAway:()            => DELETE('/vp/away'),
     getVpActingDecisions: ()        => GET('/oversight/decisions?q=').catch(() => []),
+
+    // ── App review ────────────────────────────────────────────────────────────
+    reviewApp: () => POST('/review/app'),
 
     // ── FORGE builds ──────────────────────────────────────────────────────────
     getForgeBuilds:      ()         => GET('/forge/builds'),
