@@ -105,6 +105,14 @@ async function resolveApproval(id, status, notes = null, decidedBy = 'chairman')
 
 // ─── Decisions ────────────────────────────────────────────────────────────────
 
+async function logDecision(agent, title, description, outcome = 'approved', notes = null, decidedBy = 'chairman') {
+  const { rows } = await pool.query(
+    'INSERT INTO decisions (agent,title,description,outcome,notes,decided_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
+    [agent, title, description, outcome, notes, decidedBy]
+  )
+  return rows[0].id
+}
+
 async function getDecisions(query = null, limit = 100) {
   if (query) {
     const { rows } = await pool.query(
@@ -590,7 +598,7 @@ async function setFirstLaunchDone() {
 module.exports = {
   addMessage, getConversation,
   createApproval, getApprovals, getPendingCount, resolveApproval,
-  getDecisions, getRecentDecisions, getVpActingDecisions,
+  logDecision, getDecisions, getRecentDecisions, getVpActingDecisions,
   createTask, getTasks, getTasksForAgent, getOverdueTasks, updateTask, deleteTask,
   getAgentMemory, setAgentMemory, getAgentDecisionHistory,
   createDiscussion, getDiscussionParticipants, setDiscussionRecommendation,

@@ -67,6 +67,19 @@ app.get('/decisions', requireAuth, async (req, res) => {
   }
 })
 
+app.post('/decisions/log', requireAuth, async (req, res) => {
+  try {
+    const { agent, title, description, outcome = 'approved', notes = null, decided_by = 'chairman' } = req.body
+    if (!agent || !title || !description) {
+      return res.status(400).json({ error: 'agent, title, and description are required' })
+    }
+    const id = await db.logDecision(agent, title, description, outcome, notes, decided_by)
+    res.json({ id })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ─── SPA catch-all ───────────────────────────────────────────────────────────
 // Any route not matched by an API handler returns index.html so React Router
 // can handle client-side navigation (e.g. a VP bookmarking /threads/42).
