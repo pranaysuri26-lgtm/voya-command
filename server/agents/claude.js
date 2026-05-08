@@ -215,7 +215,7 @@ async function _callAgent(agent, conversationHistory, newMessage, recentDecision
   }
 
   if (trimmedDecisions.length > 0) {
-    systemPrompt += '\n\nRESOLVED DECISIONS — these issues are ALREADY CLOSED and fixed. Do NOT flag them as active risks or open items in your responses:\n'
+    systemPrompt += '\n\nRESOLVED DECISIONS — LOCKED. Do NOT re-open, re-analyse, or re-raise any of these. If you mention one, write [DECISION LOCKED: title] and stop. These are closed:\n'
     systemPrompt += trimmedDecisions
       .map(d => `- [${d.outcome.toUpperCase()}] ${d.title}: ${d.description}`)
       .join('\n')
@@ -265,7 +265,7 @@ async function _callAgentForDiscussion(agent, topic, discussionSoFar, recentDeci
 
   const trimmedDecisions = recentDecisions.slice(0, DECISIONS_LIMIT)
   if (trimmedDecisions.length > 0) {
-    systemPrompt += '\n\nRECENT DECISIONS:\n'
+    systemPrompt += '\n\nRESOLVED DECISIONS — LOCKED. Do NOT re-open any of these. Write [DECISION LOCKED: title] if you must reference one:\n'
     systemPrompt += trimmedDecisions
       .map(d => `- [${d.outcome.toUpperCase()}] ${d.title}: ${d.description}`)
       .join('\n')
@@ -297,7 +297,7 @@ async function _callAgentForDiscussion(agent, topic, discussionSoFar, recentDeci
 
   const response = await getClient().messages.create({
     model,
-    max_tokens: 900,
+    max_tokens: 600,   // 150-word cap → ~600 tokens is generous headroom
     system: systemPrompt,
     messages: [{ role: 'user', content: userContent }],
   })

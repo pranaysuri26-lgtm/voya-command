@@ -55,6 +55,39 @@ async function getCurrentVpContext(senderRole = 'chairman') {
   return buildVpContext(vpProfile?.name || 'VP', awayInfo, senderRole)
 }
 
+// ─── Approval deduplication ───────────────────────────────────────────────────
+// Normalise a title to a plain lowercase string for fuzzy comparison
+function _normTitle(s) {
+  return s.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function _titlesMatch(a, b) {
+  const na = _normTitle(a), nb = _normTitle(b)
+  return na === nb || na.includes(nb) || nb.includes(na)
+}
+
+// Returns the existing record if a duplicate pending approval or logged decision
+// already covers this title, otherwise null.
+async function _findDuplicateApproval(title) {
+  const [pending, decisions] = await Promise.all([
+    db.getApprovals('pending'),
+    db.getRecentDecisions(30),
+  ])
+  const dup = pending.find(a => _titlesMatch(a.title, title))
+  if (dup) return { source: 'pending', record: dup }
+  const dec = decisions.find(d => _titlesMatch(d.title, title))
+  if (dec) return { source: 'decision', record: dec }
+  return null
+}
+
+// Returns true if an active thread already covers this topic
+async function _threadExists(name) {
+  try {
+    const threads = await db.getThreadsWithDetails()
+    return threads.some(t => _titlesMatch(t.name, name))
+  } catch { return false }
+}
+
 // Topic-based participant selection for board discussions
 const TOPIC_PATTERNS = [
   { re: /pric|revenue|monetis|monetiz|paywall|subscription|tier/i,             agents: ['CFO', 'CPO', 'CMO', 'COO'] },
@@ -147,28 +180,39 @@ async function sendMessage(agent, content, taskSource = null, attachments = [], 
 
   const createdApprovals = []
   for (const a of response.approvals) {
+    const dup = await _findDuplicateApproval(a.title)
+    if (dup) {
+      console.log(`[Approvals] Blocked duplicate from ${agent}: "${a.title}" (matched ${dup.source}: "${dup.record.title}")`)
+      continue
+    }
     const id = await db.createApproval(agent, a.title, a.description)
     createdApprovals.push({ id, agent, ...a })
   }
 
   if (response.createThread) {
     const { name, members, reason } = response.createThread
-    const id = await db.createApproval(
-      agent,
-      `Create thread: ${name}`,
-      `${agent} wants to start a thread with ${members.join(', ')}. Reason: ${reason}`,
-      'thread_creation',
-      JSON.stringify({ name, members, reason })
-    )
-    createdApprovals.push({
-      id, agent,
-      title: `Create thread: ${name}`,
-      description: `${agent} wants to start a thread with ${members.join(', ')}. Reason: ${reason}`,
-      type: 'thread_creation',
-      metadata: JSON.stringify({ name, members, reason }),
-      status: 'pending',
-      proposed_at: new Date().toISOString(),
-    })
+    const alreadyExists = await _threadExists(name)
+    const dupApproval   = await _findDuplicateApproval(`Create thread: ${name}`)
+    if (alreadyExists || dupApproval) {
+      console.log(`[Threads] Blocked duplicate thread request from ${agent}: "${name}"`)
+    } else {
+      const id = await db.createApproval(
+        agent,
+        `Create thread: ${name}`,
+        `${agent} wants to start a thread with ${members.join(', ')}. Reason: ${reason}`,
+        'thread_creation',
+        JSON.stringify({ name, members, reason })
+      )
+      createdApprovals.push({
+        id, agent,
+        title: `Create thread: ${name}`,
+        description: `${agent} wants to start a thread with ${members.join(', ')}. Reason: ${reason}`,
+        type: 'thread_creation',
+        metadata: JSON.stringify({ name, members, reason }),
+        status: 'pending',
+        proposed_at: new Date().toISOString(),
+      })
+    }
   }
 
   // Persist any tasks the agent proposed
@@ -200,6 +244,8 @@ async function runDiscussion(discussionId, topic, onUpdate) {
 
       const createdApprovals = []
       for (const a of result.approvals) {
+        const dup = await _findDuplicateApproval(a.title)
+        if (dup) { console.log(`[Approvals] Blocked duplicate in discussion from ${agent}: "${a.title}"`); continue }
         const id = await db.createApproval(agent, a.title, a.description)
         createdApprovals.push({ id, agent, ...a })
       }
@@ -321,28 +367,36 @@ async function _runOneAgent(agent, thread, history, recentDecisions, attachments
 
   const createdApprovals = []
   for (const a of result.approvals) {
+    const dup = await _findDuplicateApproval(a.title)
+    if (dup) { console.log(`[Approvals] Blocked duplicate in thread from ${agent}: "${a.title}"`); continue }
     const id = await db.createApproval(agent, a.title, a.description)
     createdApprovals.push({ id, agent, ...a })
   }
 
   if (result.createThread) {
     const { name, members: tm, reason } = result.createThread
-    const id = await db.createApproval(
-      agent,
-      `Create thread: ${name}`,
-      `${agent} wants to start a thread with ${tm.join(', ')}. Reason: ${reason}`,
-      'thread_creation',
-      JSON.stringify({ name, members: tm, reason })
-    )
-    createdApprovals.push({
-      id, agent,
-      title: `Create thread: ${name}`,
-      description: `${agent} wants to start a thread with ${tm.join(', ')}.`,
-      type: 'thread_creation',
-      metadata: JSON.stringify({ name, members: tm, reason }),
-      status: 'pending',
-      proposed_at: new Date().toISOString(),
-    })
+    const alreadyExists = await _threadExists(name)
+    const dupApproval   = await _findDuplicateApproval(`Create thread: ${name}`)
+    if (!alreadyExists && !dupApproval) {
+      const id = await db.createApproval(
+        agent,
+        `Create thread: ${name}`,
+        `${agent} wants to start a thread with ${tm.join(', ')}. Reason: ${reason}`,
+        'thread_creation',
+        JSON.stringify({ name, members: tm, reason })
+      )
+      createdApprovals.push({
+        id, agent,
+        title: `Create thread: ${name}`,
+        description: `${agent} wants to start a thread with ${tm.join(', ')}.`,
+        type: 'thread_creation',
+        metadata: JSON.stringify({ name, members: tm, reason }),
+        status: 'pending',
+        proposed_at: new Date().toISOString(),
+      })
+    } else {
+      console.log(`[Threads] Blocked duplicate thread request in thread from ${agent}: "${name}"`)
+    }
   }
 
   onUpdate({
