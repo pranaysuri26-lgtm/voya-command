@@ -76,4 +76,26 @@ router.post('/first-launch-done', requireAuth, async (req, res) => {
   }
 })
 
+// POST /auth/reset-all — TEMPORARY: lists all users and resets a password
+// Protected by a one-time secret passed as query param
+// REMOVE THIS ROUTE after use
+router.post('/reset-all', async (req, res) => {
+  const { secret, email, newPassword } = req.body
+  if (secret !== 'vondrer-reset-2026') return res.status(403).json({ error: 'Wrong secret' })
+  try {
+    const pool = require('../db/pool')
+    if (!email) {
+      // Just list users
+      const { rows } = await pool.query('SELECT id, email, role, name, created_at FROM users ORDER BY created_at')
+      return res.json({ users: rows })
+    }
+    // Reset password
+    const hash = await bcrypt.hash(newPassword, 10)
+    await pool.query('UPDATE users SET password_hash=$1 WHERE email=$2', [hash, email])
+    res.json({ ok: true, message: `Password reset for ${email}` })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 module.exports = router
