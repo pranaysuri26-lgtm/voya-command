@@ -72,7 +72,7 @@ export default function Sidebar({
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon">V</div>
         <div>
-          <div className="sidebar-logo-text">Voya Command</div>
+          <div className="sidebar-logo-text">Vondrer Command</div>
           <div className="sidebar-logo-sub">Executive Suite</div>
         </div>
       </div>

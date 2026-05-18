@@ -15,9 +15,9 @@ export default function LoginScreen({ onAuth }) {
     try {
       let result
       if (mode === 'login') {
-        result = await window.voyaAPI.login(email, password)
+        result = await window.vondrerAPI.login(email, password)
       } else {
-        result = await window.voyaAPI.register(email, password, name || undefined)
+        result = await window.vondrerAPI.register(email, password, name || undefined)
       }
       onAuth(result)
     } catch (err) {
@@ -34,7 +34,7 @@ export default function LoginScreen({ onAuth }) {
     }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 48, fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-2px', marginBottom: 6 }}>V</div>
-        <div style={{ fontSize: 14, color: 'var(--text-2)', fontWeight: 500 }}>Voya Command</div>
+        <div style={{ fontSize: 14, color: 'var(--text-2)', fontWeight: 500 }}>Vondrer Command</div>
       </div>
 
       <div style={{
@@ -123,9 +123,9 @@ export default function LoginScreen({ onAuth }) {
       <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
         Connecting to{' '}
         <span style={{ color: 'var(--text-2)', fontFamily: 'monospace' }}>
-          {(typeof window !== 'undefined' && window.__VOYA_WEB__)
+          {(typeof window !== 'undefined' && window.__VONDRER_WEB__)
             ? window.location.host
-            : ((typeof process !== 'undefined' && process.env?.VOYA_SERVER_URL) || 'localhost:3001')}
+            : ((typeof process !== 'undefined' && process.env?.VONDRER_SERVER_URL) || 'localhost:3001')}
         </span>
       </div>
     </div>

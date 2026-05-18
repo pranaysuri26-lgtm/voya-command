@@ -193,7 +193,7 @@ function MessageBubble({ msg, agent, decisions = [] }) {
   function handleContextMenu(e) {
     e.preventDefault()
     const selected = window.getSelection()?.toString() || ''
-    window.voyaAPI.showContextMenu(selected || cleanContent)
+    window.vondrerAPI.showContextMenu(selected || cleanContent)
   }
 
   return (
@@ -339,12 +339,12 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
 
   // Load resolved decisions once — used for stale-context banner
   useEffect(() => {
-    window.voyaAPI.getDecisions().then(d => setDecisions(d || [])).catch(() => {})
+    window.vondrerAPI.getDecisions().then(d => setDecisions(d || [])).catch(() => {})
   }, [])
 
   // Reload on WS reconnect (Railway wake) or window focus
   useEffect(() => {
-    const unsubWs = window.voyaAPI.on('ws-connected', () => loadHistory())
+    const unsubWs = window.vondrerAPI.on('ws-connected', () => loadHistory())
     const onFocus = () => loadHistory()
     window.addEventListener('focus', onFocus)
     return () => {
@@ -356,7 +356,7 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
   // Listen for shared/broadcast agent-message events from OTHER users (e.g. Chairman broadcasts @VP)
   // isShared=true means the message was a broadcast or @mentions the other human — VP should see it
   useEffect(() => {
-    const unsub = window.voyaAPI.on('agent-message', (data) => {
+    const unsub = window.vondrerAPI.on('agent-message', (data) => {
       if (!data.isShared) return                                    // private message — ignore
       if (data.userId === currentUserId) return                     // own message — already shown optimistically
       if (data.agent !== selectedAgent && selectedAgent !== 'ALL') return // wrong chat view
@@ -378,7 +378,7 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
   // Show inline if viewing that agent; DB write already happened so loadHistory() picks it up on next visit.
   // Also filter by userId so VP doesn't see Chairman's live messages and vice versa.
   useEffect(() => {
-    const unsub = window.voyaAPI.on('agent-acknowledgment', (data) => {
+    const unsub = window.vondrerAPI.on('agent-acknowledgment', (data) => {
       if (data.agent !== selectedAgent) return
       // If the broadcast carries a userId, only show it to the matching user
       if (data.userId && currentUserId && data.userId !== currentUserId) return
@@ -420,7 +420,7 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
 
   async function loadHistory() {
     if (selectedAgent === 'ALL') { setMessages([]); return }
-    const msgs = await window.voyaAPI.getConversation(selectedAgent)
+    const msgs = await window.vondrerAPI.getConversation(selectedAgent)
     setMessages(msgs)
   }
 
@@ -534,7 +534,7 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
       setThinkingAgent(agent)
 
       try {
-        const result = await window.voyaAPI.sendMessage(agent, content, attachments, senderRole, isBroadcast)
+        const result = await window.vondrerAPI.sendMessage(agent, content, attachments, senderRole, isBroadcast)
         const agentMsg = {
           id: `resp-${Date.now()}-${agent}`,
           agent, role: 'agent', content: result.content,
@@ -543,7 +543,7 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
         setMessages(prev => [...prev, agentMsg])
         if (result.approvals?.length > 0) onNewApprovals(result.approvals)
         // Refresh decisions so the stale-context banner stays current
-        window.voyaAPI.getDecisions().then(d => setDecisions(d || [])).catch(() => {})
+        window.vondrerAPI.getDecisions().then(d => setDecisions(d || [])).catch(() => {})
       } catch (err) {
         const errMsg = {
           id: `err-${Date.now()}-${agent}`,
@@ -570,7 +570,7 @@ export default function ChatPanel({ selectedAgent, onNewApprovals, onEscalateToB
   async function takeScreenshot() {
     setScreenshotting(true)
     try {
-      const result = await window.voyaAPI.takeScreenshot()
+      const result = await window.vondrerAPI.takeScreenshot()
       setToast(`Screenshot saved: ${result.filename}`)
     } catch {
       setToast('Screenshot failed')

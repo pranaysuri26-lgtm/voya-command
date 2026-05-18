@@ -1,7 +1,7 @@
 {
-  "name": "voya-command",
+  "name": "vondrer-command",
   "version": "1.0.0",
-  "description": "Voya Command Center — AI Executive Agent Dashboard",
+  "description": "Vondrer Command Center — AI Executive Agent Dashboard",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

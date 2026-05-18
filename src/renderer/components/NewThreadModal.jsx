@@ -37,7 +37,7 @@ export default function NewThreadModal({ onClose, onCreate, vpProfile = null, cu
     if (!trimmed || selected.size === 0 || creating) return
     setCreating(true)
     try {
-      const thread = await window.voyaAPI.createThread(trimmed, [...selected])
+      const thread = await window.vondrerAPI.createThread(trimmed, [...selected])
       onCreate(thread.id)
     } finally {
       setCreating(false)

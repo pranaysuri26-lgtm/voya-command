@@ -133,7 +133,7 @@ function IdlePlaceholder({ mode, onStart }) {
       </div>
       <div style={{ fontSize: 11, maxWidth: 280, lineHeight: 1.6 }}>
         {isReview
-          ? 'All 5 executives review getvoya.net from their domain lens and post findings here.'
+          ? 'All 5 executives review vondrer.com from their domain lens and post findings here.'
           : 'Each executive surfaces the ONE risk in their domain they haven\'t been asked about. No updates — only concerns.'}
       </div>
       <button onClick={onStart} style={{
@@ -172,17 +172,17 @@ export default function ReviewPanel({ initialMode = 'review' }) {
 
     const unsubs = []
 
-    unsubs.push(window.voyaAPI.on(startEvt, () => {
+    unsubs.push(window.vondrerAPI.on(startEvt, () => {
       setPhase('running')
       setAgentStatus(Object.fromEntries(AGENTS.map(a => [a, 'pending'])))
       setAgentContent({})
     }))
 
-    unsubs.push(window.voyaAPI.on(thinkEvt, ({ agent }) => {
+    unsubs.push(window.vondrerAPI.on(thinkEvt, ({ agent }) => {
       setAgentStatus(prev => ({ ...prev, [agent]: 'thinking' }))
     }))
 
-    unsubs.push(window.voyaAPI.on('agent-message', (payload) => {
+    unsubs.push(window.vondrerAPI.on('agent-message', (payload) => {
       if (payload.source !== msgSource) return
       const agent = payload.agent
       if (!agent) return
@@ -190,7 +190,7 @@ export default function ReviewPanel({ initialMode = 'review' }) {
       setAgentStatus(prev => ({ ...prev, [agent]: 'done' }))
     }))
 
-    unsubs.push(window.voyaAPI.on(completeEvt, () => setPhase('done')))
+    unsubs.push(window.vondrerAPI.on(completeEvt, () => setPhase('done')))
 
     return () => unsubs.forEach(fn => fn())
   }, [mode])
@@ -204,8 +204,8 @@ export default function ReviewPanel({ initialMode = 'review' }) {
     setAgentStatus(Object.fromEntries(AGENTS.map(a => [a, 'pending'])))
     setAgentContent({})
     try {
-      if (mode === 'review') await window.voyaAPI.reviewApp()
-      else                   await window.voyaAPI.boardBrief()
+      if (mode === 'review') await window.vondrerAPI.reviewApp()
+      else                   await window.vondrerAPI.boardBrief()
     } catch (err) {
       console.error('[ReviewPanel] failed:', err)
       setPhase('idle')
@@ -280,7 +280,7 @@ export default function ReviewPanel({ initialMode = 'review' }) {
 
         {/* Status line */}
         <div style={{ fontSize: 11, color: 'var(--text-3)', paddingBottom: 10 }}>
-          {phase === 'idle'    && (isReview ? 'All 5 board members review getvoya.net' : 'Each executive surfaces one unprompted concern')}
+          {phase === 'idle'    && (isReview ? 'All 5 board members review vondrer.com' : 'Each executive surfaces one unprompted concern')}
           {phase === 'running' && `${isReview ? 'Reviewing' : 'Briefing'}… ${doneCount}/5 agents done`}
           {phase === 'done'    && `${isReview ? 'Review' : 'Brief'} complete — ${doneCount}/5 responses`}
         </div>

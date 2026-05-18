@@ -50,7 +50,7 @@ export default function DirectPanel({ currentRole = 'chairman', vpName = 'VP' })
   }, [])
 
   useEffect(() => {
-    const unsubWs = window.voyaAPI.on('ws-connected', () => loadHistory())
+    const unsubWs = window.vondrerAPI.on('ws-connected', () => loadHistory())
     const onFocus = () => loadHistory()
     window.addEventListener('focus', onFocus)
     return () => {
@@ -60,7 +60,7 @@ export default function DirectPanel({ currentRole = 'chairman', vpName = 'VP' })
   }, [])
 
   useEffect(() => {
-    const unsub = window.voyaAPI.on('direct-message', (data) => {
+    const unsub = window.vondrerAPI.on('direct-message', (data) => {
       const msg = {
         id: `dm-${Date.now()}-${Math.random()}`,
         role: 'chairman',
@@ -84,7 +84,7 @@ export default function DirectPanel({ currentRole = 'chairman', vpName = 'VP' })
 
   async function loadHistory() {
     try {
-      const msgs = await window.voyaAPI.getConversation('VP_DIRECT')
+      const msgs = await window.vondrerAPI.getConversation('VP_DIRECT')
       setMessages(msgs)
     } catch {
       setMessages([])
@@ -110,7 +110,7 @@ export default function DirectPanel({ currentRole = 'chairman', vpName = 'VP' })
     setSending(true)
 
     try {
-      await window.voyaAPI.sendMessage('VP_DIRECT', content, [], senderRole)
+      await window.vondrerAPI.sendMessage('VP_DIRECT', content, [], senderRole)
     } catch (err) {
       setMessages(prev => [...prev, {
         id: `err-${Date.now()}`,

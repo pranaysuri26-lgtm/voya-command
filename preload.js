@@ -3,8 +3,8 @@ const { contextBridge, ipcRenderer } = require('electron')
 // ─── Config ───────────────────────────────────────────────────────────────────
 // SERVER_URL is injected by main.js via the preload environment or defaults.
 // During development: http://localhost:3001
-// In production: your Railway URL (set VOYA_SERVER_URL env var)
-const SERVER_URL = (process.env.VOYA_SERVER_URL || 'http://localhost:3001').replace(/\/$/, '')
+// In production: your Railway URL (set VONDRER_SERVER_URL env var)
+const SERVER_URL = (process.env.VONDRER_SERVER_URL || 'http://localhost:3001').replace(/\/$/, '')
 const WS_URL = SERVER_URL.replace(/^http/, 'ws')
 
 // ─── Auth token (in-memory only) ─────────────────────────────────────────────
@@ -89,7 +89,7 @@ function wsOn(channel, callback) {
 }
 
 // ─── Exposed API ─────────────────────────────────────────────────────────────
-contextBridge.exposeInMainWorld('voyaAPI', {
+contextBridge.exposeInMainWorld('vondrerAPI', {
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   login: async (email, password) => {

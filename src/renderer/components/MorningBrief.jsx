@@ -34,7 +34,7 @@ export default function MorningBrief({ onClose, onSelectAgent, onViewTasks }) {
   async function load() {
     setLoading(true)
     try {
-      const data = await window.voyaAPI.getDailyBrief()
+      const data = await window.vondrerAPI.getDailyBrief()
       setBrief(data)
     } catch (e) {
       console.error('[MorningBrief]', e)

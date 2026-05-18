@@ -1,7 +1,7 @@
 {
-  "name": "voya-command-server",
+  "name": "vondrer-command-server",
   "version": "1.0.0",
-  "description": "Voya Command — API + Agent Server",
+  "description": "Vondrer Command — API + Agent Server",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

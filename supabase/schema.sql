@@ -1,5 +1,5 @@
 -- ============================================================
--- VOYA SUPABASE SCHEMA — FINAL
+-- VONDRER SUPABASE SCHEMA — FINAL
 -- Confirmed: 2026-05-05
 -- Onboarding questions locked. All tables complete.
 -- ============================================================
@@ -91,7 +91,7 @@ CREATE TABLE destinations (
   budget_per_day_usd_min  INT,
   budget_per_day_usd_max  INT,
 
-  -- Voya scoring
+  -- Vondrer scoring
   hidden_gem_score      INT CHECK (hidden_gem_score BETWEEN 1 AND 10), -- 10 = truly unknown
   popularity_rank       INT, -- lower number = more touristy
 
@@ -247,9 +247,9 @@ CREATE TABLE passport_stamps (
   trip_id                  UUID REFERENCES user_trips(id) ON DELETE SET NULL,
   visited_date             DATE,
 
-  -- Voya context
+  -- Vondrer context
   is_hidden_gem            BOOLEAN DEFAULT FALSE,  -- destination gem score >= 8
-  was_voya_recommendation  BOOLEAN DEFAULT FALSE,  -- came from a Voya rec
+  was_vondrer_recommendation  BOOLEAN DEFAULT FALSE,  -- came from a Vondrer rec
 
   -- AI memory line
   ai_memory                TEXT,

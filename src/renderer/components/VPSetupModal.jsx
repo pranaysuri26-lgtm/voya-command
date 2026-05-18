@@ -10,7 +10,7 @@ export default function VPSetupModal({ existing, onClose, onSaved }) {
 
   // Load private notes (Chairman only view)
   useEffect(() => {
-    window.voyaAPI.getVpProfileWithNotes().then(p => {
+    window.vondrerAPI.getVpProfileWithNotes().then(p => {
       if (p) {
         setName(p.name || 'VP')
         setNotes(p.privateNotes || '')
@@ -32,12 +32,12 @@ export default function VPSetupModal({ existing, onClose, onSaved }) {
     setLoading(true)
     try {
       if (isNewPin || !existing?.hasPin) {
-        const result = await window.voyaAPI.setupVpProfile(name.trim(), pin)
+        const result = await window.vondrerAPI.setupVpProfile(name.trim(), pin)
         if (result?.error) { setError(result.error); setLoading(false); return }
       } else {
-        await window.voyaAPI.updateVpName(name.trim())
+        await window.vondrerAPI.updateVpName(name.trim())
       }
-      await window.voyaAPI.updateVpNotes(notes)
+      await window.vondrerAPI.updateVpNotes(notes)
       onSaved?.({ name: name.trim(), hasPin: true })
       onClose()
     } catch (err) {

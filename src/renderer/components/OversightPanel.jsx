@@ -29,7 +29,7 @@ export default function OversightPanel({ onSelectThread, onSelectAgent }) {
 
   // Real-time: thread agent messages
   useEffect(() => {
-    const unsub = window.voyaAPI.on('thread-update', (update) => {
+    const unsub = window.vondrerAPI.on('thread-update', (update) => {
       if (update.type !== 'message') return
       setMessages(prev => {
         const id = `tm-${update.messageId}`
@@ -50,7 +50,7 @@ export default function OversightPanel({ onSelectThread, onSelectAgent }) {
 
   // Real-time: direct 1-on-1 chat agent messages
   useEffect(() => {
-    const unsub = window.voyaAPI.on('oversight-direct-message', (msg) => {
+    const unsub = window.vondrerAPI.on('oversight-direct-message', (msg) => {
       if (agentFilter !== 'ALL' && msg.sender !== agentFilter) return
       setMessages(prev => {
         if (prev.find(m => m.id === msg.id)) return prev
@@ -64,7 +64,7 @@ export default function OversightPanel({ onSelectThread, onSelectAgent }) {
     setLoading(true)
     try {
       const filter = agentFilter === 'ALL' ? null : agentFilter
-      const msgs = await window.voyaAPI.getOversightMessages(filter, 200)
+      const msgs = await window.vondrerAPI.getOversightMessages(filter, 200)
       setMessages(Array.isArray(msgs) ? msgs : [])
     } catch (err) {
       console.error('[Oversight] load failed:', err)

@@ -109,7 +109,7 @@ function initialize(userDataPath) {
   if (!fs.existsSync(userDataPath)) {
     fs.mkdirSync(userDataPath, { recursive: true })
   }
-  const dbPath = path.join(userDataPath, 'voya-command.db')
+  const dbPath = path.join(userDataPath, 'vondrer-command.db')
   db = new Database(dbPath)
   db.pragma('journal_mode = WAL')
   db.exec(SCHEMA)

@@ -275,11 +275,11 @@ async function runDiscussion(discussionId, topic, onUpdate) {
 }
 
 async function triggerWelcomeBriefing() {
-  const task = `You are starting your first day as Voya's COO. Give the Chairman (solo founder) a warm but professional welcome briefing. Cover:
+  const task = `You are starting your first day as Vondrer's COO. Give the Chairman (solo founder) a warm but professional welcome briefing. Cover:
 1. Your role and how you'll support them
 2. The other executives (CPO, CMO, CTO, CFO) and their domains
 3. How to use this command center: direct message any agent, or open a board discussion to get multiple perspectives at once
-4. Your first suggested action for Voya's launch
+4. Your first suggested action for Vondrer's launch
 
 Keep it under 200 words. Be energising and focused.`
 
@@ -295,7 +295,7 @@ async function triggerDailyBriefing() {
   const results = {}
 
   const tasks = {
-    COO: 'Post your morning standup. Top 3 priorities for Voya today. 3 bullet points max.',
+    COO: 'Post your morning standup. Top 3 priorities for Vondrer today. 3 bullet points max.',
     CMO: "Post today's content idea. One specific Instagram/Reddit post concept. Include the hook, format, and target subreddit or hashtag.",
     CFO: 'Daily cost check-in. Estimate Claude API burn rate, flag cost risks, confirm we are under the $0.08/session ceiling.',
   }

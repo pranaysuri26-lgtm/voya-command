@@ -108,7 +108,7 @@ function ThreadMessage({ msg, localFiles, vpName = 'VP' }) {
   function handleContextMenu(e) {
     e.preventDefault()
     const selected = window.getSelection()?.toString() || ''
-    window.voyaAPI.showContextMenu(selected || cleanContent)
+    window.vondrerAPI.showContextMenu(selected || cleanContent)
   }
 
   return (
@@ -248,7 +248,7 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
   // Reload messages when WS reconnects (Railway wake) or window regains focus
   useEffect(() => {
     if (!threadId) return
-    const unsubWs = window.voyaAPI.on('ws-connected', () => loadThread())
+    const unsubWs = window.vondrerAPI.on('ws-connected', () => loadThread())
     const onFocus = () => loadThread()
     window.addEventListener('focus', onFocus)
     return () => {
@@ -258,7 +258,7 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
   }, [threadId])
 
   useEffect(() => {
-    const unsub = window.voyaAPI.on('thread-update', (update) => {
+    const unsub = window.vondrerAPI.on('thread-update', (update) => {
       if (update.threadId !== threadId) return
 
       if (update.type === 'typing') {
@@ -299,7 +299,7 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
   }, [messages, typingAgents])
 
   async function loadThread() {
-    const { thread: t, messages: msgs } = await window.voyaAPI.getThread(threadId)
+    const { thread: t, messages: msgs } = await window.vondrerAPI.getThread(threadId)
     setThread(t)
     setMessages(msgs)
     setTypingAgents(new Set())
@@ -330,7 +330,7 @@ export default function ThreadPanel({ threadId, onNewApprovals, onDelete, curren
     }))
 
     const senderRole = currentRole === 'vp' ? 'vp' : 'chairman'
-    const result = await window.voyaAPI.sendThreadMessage(threadId, content, attachments, senderRole)
+    const result = await window.vondrerAPI.sendThreadMessage(threadId, content, attachments, senderRole)
     const msg = {
       id: result.messageId, thread_id: threadId,
       sender: result.sender || senderRole, content: result.content || content,

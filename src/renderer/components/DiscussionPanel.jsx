@@ -50,7 +50,7 @@ function DiscussionView({ discussionId, liveUpdates, typingAgent, onNewApprovals
   }, [messages, typingAgent])
 
   async function load() {
-    const { discussion: d, messages: msgs } = await window.voyaAPI.getDiscussionMessages(discussionId)
+    const { discussion: d, messages: msgs } = await window.vondrerAPI.getDiscussionMessages(discussionId)
     setDiscussion(d)
     setMessages(msgs)
   }
@@ -163,7 +163,7 @@ export default function DiscussionPanel({
     setStarting(true)
     setTopic('')
     // participants=undefined → main process uses selectParticipants(topic)
-    const result = await window.voyaAPI.startDiscussion(t)
+    const result = await window.vondrerAPI.startDiscussion(t)
     onSelectDiscussion(result.discussionId)
     setStarting(false)
   }

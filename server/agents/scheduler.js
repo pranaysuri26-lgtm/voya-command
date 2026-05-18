@@ -13,7 +13,7 @@ function broadcastDiscussion(discussionId, topic, update) {
 
 // ─── Rotating discussion topics ───────────────────────────────────────────────
 const DISCUSSION_TOPICS = [
-  'Voya launch readiness — what is our go/no-go checklist and who owns each item?',
+  'Vondrer launch readiness — what is our go/no-go checklist and who owns each item?',
   'First 100 users strategy — acquisition channels, content plan, and referral loops',
   'Product roadmap prioritization — what ships in v1 vs what waits for v2?',
   'Pricing and paywall optimization — where should the free/paid line be drawn?',

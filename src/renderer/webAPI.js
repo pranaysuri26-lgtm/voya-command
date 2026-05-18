@@ -1,5 +1,5 @@
-// ─── Browser-native voyaAPI ───────────────────────────────────────────────────
-// Installed by index.jsx when window.voyaAPI is not already present (i.e. the
+// ─── Browser-native vondrerAPI ───────────────────────────────────────────────────
+// Installed by index.jsx when window.vondrerAPI is not already present (i.e. the
 // app is running in a browser, not Electron where preload.js injects it).
 //
 // All HTTP calls use relative paths so the app works on any host.
@@ -125,9 +125,9 @@ const CHANNEL_MAP = {
 // ─── Install ──────────────────────────────────────────────────────────────────
 export function installWebAPI() {
   // Flag read by LoginScreen to show window.location.host instead of .env URL
-  window.__VOYA_WEB__ = true
+  window.__VONDRER_WEB__ = true
 
-  window.voyaAPI = {
+  window.vondrerAPI = {
 
     // ── Auth ──────────────────────────────────────────────────────────────────
     login: async (email, password) => {

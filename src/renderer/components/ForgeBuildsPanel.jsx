@@ -46,7 +46,7 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
 
   useEffect(() => {
     load()
-    const unsub = window.voyaAPI.on('forge-build', (data) => {
+    const unsub = window.vondrerAPI.on('forge-build', (data) => {
       load()
       if (onNewBuildEvent) onNewBuildEvent(data)
     })
@@ -55,7 +55,7 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
 
   async function load() {
     try {
-      const data = await window.voyaAPI.getForgeBuilds()
+      const data = await window.vondrerAPI.getForgeBuilds()
       setSessions(data || [])
       if (!expanded && data?.length > 0) setExpanded(data[0].session_id)
     } catch { /* ignore */ }
@@ -63,7 +63,7 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
   }
 
   function openPreview(file) {
-    const url = window.voyaAPI.forgePreviewUrl(file.id)
+    const url = window.vondrerAPI.forgePreviewUrl(file.id)
     const insta = getInstaInfo(file.filename)
     setPreview({ ...file, url, insta })
   }
@@ -102,7 +102,7 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
             background: 'var(--bg-3)', border: '1px solid var(--border)',
             borderRadius: 8, padding: '8px 12px', maxWidth: 280, textAlign: 'center', lineHeight: 1.5,
           }}>
-            Try: <span style={{ color: 'var(--text-2)', fontStyle: 'italic' }}>"Build me an Instagram post announcing Voya's waitlist"</span>
+            Try: <span style={{ color: 'var(--text-2)', fontStyle: 'italic' }}>"Build me an Instagram post announcing Vondrer's waitlist"</span>
           </div>
         </div>
       ) : (
@@ -215,7 +215,7 @@ export default function ForgeBuildsPanel({ onNewBuildEvent }) {
                           )}
                           <button
                             onClick={() => {
-                              const url = window.voyaAPI.forgePreviewUrl(file.id)
+                              const url = window.vondrerAPI.forgePreviewUrl(file.id)
                               window.open(url, '_blank')
                             }}
                             style={{

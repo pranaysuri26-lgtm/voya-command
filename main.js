@@ -433,7 +433,7 @@ ipcMain.handle('take-screenshot', async () => {
   const image = await mainWindow.webContents.capturePage()
   const buffer = image.toPNG()
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-  const filename = `voya-command-${timestamp}.png`
+  const filename = `vondrer-command-${timestamp}.png`
   const savePath = path.join(app.getPath('desktop'), filename)
   fs.writeFileSync(savePath, buffer)
   shell.showItemInFolder(savePath)

@@ -33,7 +33,7 @@ export default function VPModeGate({ vpName, onSuccess, onCancel }) {
   async function verify(pin) {
     setLoading(true)
     try {
-      const result = await window.voyaAPI.verifyVpPin(pin)
+      const result = await window.vondrerAPI.verifyVpPin(pin)
       if (result.valid) {
         onSuccess()
       } else {

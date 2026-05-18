@@ -18,8 +18,8 @@ import LoginScreen from './components/LoginScreen'
 import ReviewPanel from './components/ReviewPanel'
 
 // ─── Token persistence (localStorage) ───────────────────────────────────────
-const TOKEN_KEY = 'voya_auth_token'
-const USER_KEY  = 'voya_auth_user'
+const TOKEN_KEY = 'vondrer_auth_token'
+const USER_KEY  = 'vondrer_auth_user'
 
 export default function App() {
   const [authed, setAuthed]   = useState(false)
@@ -58,7 +58,7 @@ export default function App() {
     const user  = localStorage.getItem(USER_KEY)
     if (token && user) {
       try {
-        window.voyaAPI.setToken(token)
+        window.vondrerAPI.setToken(token)
         const parsed = JSON.parse(user)
         setAuthUser(parsed)
         setAuthed(true)
@@ -95,13 +95,13 @@ export default function App() {
 
   async function init() {
     try {
-      const isFirst = await window.voyaAPI.getFirstLaunch()
+      const isFirst = await window.vondrerAPI.getFirstLaunch()
       const [pendingApprovals, allThreads, archived, vp, away] = await Promise.all([
-        window.voyaAPI.getApprovals('inbox'),
-        window.voyaAPI.getThreads(),
-        window.voyaAPI.getArchivedThreads(),
-        window.voyaAPI.getVpProfile(),
-        window.voyaAPI.getChairmanAway(),
+        window.vondrerAPI.getApprovals('inbox'),
+        window.vondrerAPI.getThreads(),
+        window.vondrerAPI.getArchivedThreads(),
+        window.vondrerAPI.getVpProfile(),
+        window.vondrerAPI.getChairmanAway(),
       ])
       setApprovals(pendingApprovals)
       setThreads(allThreads)
@@ -110,8 +110,8 @@ export default function App() {
       setChairmanAway(away)
 
       if (isFirst) {
-        await window.voyaAPI.setFirstLaunchDone()
-        const result = await window.voyaAPI.triggerWelcome()
+        await window.vondrerAPI.setFirstLaunchDone()
+        const result = await window.vondrerAPI.triggerWelcome()
         if (result.content) {
           setSelectedAgent('COO')
           setActiveView('chat')
@@ -123,9 +123,9 @@ export default function App() {
 
       // Auto-show morning brief once per day
       const today = new Date().toDateString()
-      const lastBriefDate = localStorage.getItem('voya_last_brief_date')
+      const lastBriefDate = localStorage.getItem('vondrer_last_brief_date')
       if (lastBriefDate !== today && !isFirst) {
-        localStorage.setItem('voya_last_brief_date', today)
+        localStorage.setItem('vondrer_last_brief_date', today)
         setActiveView('brief')
       }
     } catch (err) {
@@ -146,17 +146,17 @@ export default function App() {
     }, 4 * 60 * 1000)
 
     // Monitor WS connect/disconnect to show reconnecting banner
-    window.voyaAPI.on('ws-connected',    () => setWsConnected(true))
-    window.voyaAPI.on('ws-disconnected', () => setWsConnected(false))
+    window.vondrerAPI.on('ws-connected',    () => setWsConnected(true))
+    window.vondrerAPI.on('ws-disconnected', () => setWsConnected(false))
 
-    window.voyaAPI.on('new-approval', (approval) => {
+    window.vondrerAPI.on('new-approval', (approval) => {
       setApprovals((prev) => {
         if (prev.find((a) => a.id === approval.id)) return prev
         return [{ ...approval, status: 'pending', proposed_at: new Date().toISOString() }, ...prev]
       })
     })
 
-    window.voyaAPI.on('thread-update', (update) => {
+    window.vondrerAPI.on('thread-update', (update) => {
       if (update.type === 'message') {
         const isCurrentThread = activeView === 'thread' && selectedThread === update.threadId
         setUnreadThreadIds(prev => {
@@ -175,31 +175,31 @@ export default function App() {
           })
         }
         setOversightUnread(prev => prev || true)
-        window.voyaAPI.getThreads().then(setThreads)
+        window.vondrerAPI.getThreads().then(setThreads)
       }
     })
 
     // Agent-proposed thread was approved — refresh threads and navigate
-    window.voyaAPI.on('thread-created', ({ thread }) => {
-      window.voyaAPI.getThreads().then(setThreads)
+    window.vondrerAPI.on('thread-created', ({ thread }) => {
+      window.vondrerAPI.getThreads().then(setThreads)
       selectThread(thread.id)
     })
 
-    window.voyaAPI.on('briefing-ready', () => {
-      window.voyaAPI.getApprovals('inbox').then(setApprovals)
+    window.vondrerAPI.on('briefing-ready', () => {
+      window.vondrerAPI.getApprovals('inbox').then(setApprovals)
     })
 
-    window.voyaAPI.on('chairman-away-changed', (awayInfo) => {
+    window.vondrerAPI.on('chairman-away-changed', (awayInfo) => {
       setChairmanAway(awayInfo)
     })
 
-    window.voyaAPI.on('threads-updated', () => {
-      window.voyaAPI.getThreads().then(setThreads)
-      window.voyaAPI.getArchivedThreads().then(a => setArchivedThreads(a || []))
+    window.vondrerAPI.on('threads-updated', () => {
+      window.vondrerAPI.getThreads().then(setThreads)
+      window.vondrerAPI.getArchivedThreads().then(a => setArchivedThreads(a || []))
     })
 
     // Another user resolved an approval — sync inbox
-    window.voyaAPI.on('approval-resolved', ({ id, status }) => {
+    window.vondrerAPI.on('approval-resolved', ({ id, status }) => {
       if (status === 'held') {
         setApprovals(prev => prev.map(a => a.id === id ? { ...a, status: 'held' } : a))
       } else {
@@ -208,7 +208,7 @@ export default function App() {
     })
 
     // Queue high-activity warning
-    window.voyaAPI.on('high-activity', ({ message }) => {
+    window.vondrerAPI.on('high-activity', ({ message }) => {
       setActivityNotice(message)
       // Auto-dismiss after 8 s
       setTimeout(() => setActivityNotice(null), 8000)
@@ -230,7 +230,7 @@ export default function App() {
 
   async function handleResolve(id, status, notes) {
     const decidedBy = vpActing ? 'vp_acting' : 'chairman'
-    await window.voyaAPI.resolveApproval(id, status, notes, decidedBy)
+    await window.vondrerAPI.resolveApproval(id, status, notes, decidedBy)
     if (status === 'held') {
       setApprovals(prev => prev.map(a => a.id === id ? { ...a, status: 'held' } : a))
     } else {
@@ -249,13 +249,13 @@ export default function App() {
   }
 
   async function handleSetAway(returnDate, note) {
-    await window.voyaAPI.setChairmanAway(returnDate, note)
-    const updated = await window.voyaAPI.getChairmanAway()
+    await window.vondrerAPI.setChairmanAway(returnDate, note)
+    const updated = await window.vondrerAPI.getChairmanAway()
     setChairmanAway(updated)
   }
 
   async function handleClearAway() {
-    const result = await window.voyaAPI.clearChairmanAway()
+    const result = await window.vondrerAPI.clearChairmanAway()
     setChairmanAway(null)
     setCurrentRole('chairman') // revert to chairman on return
     if (result?.summary) {
@@ -278,17 +278,17 @@ export default function App() {
   }
 
   async function handleThreadCreated(threadId) {
-    const allThreads = await window.voyaAPI.getThreads()
+    const allThreads = await window.vondrerAPI.getThreads()
     setThreads(allThreads)
     setIsNewThreadModalOpen(false)
     selectThread(threadId)
   }
 
   async function handleDeleteThread(threadId) {
-    await window.voyaAPI.archiveThread(threadId)
+    await window.vondrerAPI.archiveThread(threadId)
     const [allThreads, archived] = await Promise.all([
-      window.voyaAPI.getThreads(),
-      window.voyaAPI.getArchivedThreads(),
+      window.vondrerAPI.getThreads(),
+      window.vondrerAPI.getArchivedThreads(),
     ])
     setThreads(allThreads)
     setArchivedThreads(archived || [])
@@ -297,10 +297,10 @@ export default function App() {
   }
 
   async function handleUnarchiveThread(threadId) {
-    await window.voyaAPI.unarchiveThread(threadId)
+    await window.vondrerAPI.unarchiveThread(threadId)
     const [allThreads, archived] = await Promise.all([
-      window.voyaAPI.getThreads(),
-      window.voyaAPI.getArchivedThreads(),
+      window.vondrerAPI.getThreads(),
+      window.vondrerAPI.getArchivedThreads(),
     ])
     setThreads(allThreads)
     setArchivedThreads(archived || [])
@@ -317,7 +317,7 @@ export default function App() {
   function handleLogout() {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
-    localStorage.removeItem('voya_last_brief_date')
+    localStorage.removeItem('vondrer_last_brief_date')
     setAuthed(false)
     setReady(false)
     setAuthUser(null)
@@ -346,7 +346,7 @@ export default function App() {
 
 
   async function escalateToBoard(topic) {
-    const result = await window.voyaAPI.startDiscussion(topic)
+    const result = await window.vondrerAPI.startDiscussion(topic)
     // no-op navigation — discussions are legacy
     console.log('Board discussion started:', result.discussionId)
   }
@@ -361,7 +361,7 @@ export default function App() {
     return (
       <div className="loading-overlay">
         <div className="loading-logo">V</div>
-        <div className="loading-text">Starting Voya Command…</div>
+        <div className="loading-text">Starting Vondrer Command…</div>
       </div>
     )
   }
@@ -586,7 +586,7 @@ function RecentDecisions() {
   const [decisions, setDecisions] = useState([])
 
   useEffect(() => {
-    window.voyaAPI.getDecisions(null).then((d) => setDecisions(d.slice(0, 20)))
+    window.vondrerAPI.getDecisions(null).then((d) => setDecisions(d.slice(0, 20)))
   }, [])
 
   const AGENT_COLORS = {

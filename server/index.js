@@ -107,7 +107,7 @@ async function boot() {
     })
 
     server.listen(PORT, () => {
-      console.log(`[Server] Voya Command running on port ${PORT}`)
+      console.log(`[Server] Vondrer Command running on port ${PORT}`)
     })
   } catch (err) {
     console.error('[Server] Boot failed:', err)

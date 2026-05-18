@@ -8,19 +8,19 @@ const broadcast = require('../ws/broadcast')
 // Keep this up to date as the app evolves.
 
 const APP_CONTEXT = `
-## App under review: getvoya.net
+## App under review: vondrer.com
 
-**What Voya is:** AI-powered travel discovery app. Surfaces hidden-gem destinations matched to the user's budget, travel style, and offbeat preference. Freemium: 3 destinations free, rest locked behind a Pro paywall (not yet live).
+**What Vondrer is:** AI-powered travel discovery app. Surfaces hidden-gem destinations matched to the user's budget, travel style, and offbeat preference. Freemium: 3 destinations free, rest locked behind a Pro paywall (not yet live).
 
 **Current stack:**
 - Next.js 16 (App Router) on Vercel
 - Supabase (auth + Postgres DB)
 - Claude API (claude-opus-4-5) for AI recommendations
 - Tailwind CSS, Cormorant Garamond + Raleway fonts
-- Domain: getvoya.net | Hub: hub.getvoya.net
+- Domain: vondrer.com | Hub: hub.vondrer.com
 
 **Full user flow (live today):**
-1. getvoya.net → Santorini landing page (concept-7 HTML) with BEGIN CTA
+1. vondrer.com → Santorini landing page (concept-7 HTML) with BEGIN CTA
 2. /signup → 8-step onboarding: account → location (with live currency detection) → budget (shown in local currency) → trip duration → group type → interests (6 options) → offbeat slider (1–5) → past trips
 3. /discover → AI loading screen (animated compass, cycling copy) → 5–10 destination cards ranked by match score. Cards show: name, country, match %, reasons (2-3 tags), budget/day in user's local currency, best time to visit, gem score dots. First 3 unlocked, rest blurred/locked with unlock CTA.
 4. /profile → Edit all preferences + past trips. Saving invalidates AI cache, triggering fresh recommendations on next /discover visit.
@@ -29,13 +29,13 @@ const APP_CONTEXT = `
 - Stripe paywall (unlock banner shows "coming soon")
 - Destination detail page / AI itinerary
 - Booking affiliate links (Booking.com, Skyscanner)
-- Voya Passport feature
+- Vondrer Passport feature
 - Google OAuth (broken — redirect_uri_mismatch, fix pending)
 - Mobile PWA config
 
 **Known issues:**
 - Google OAuth blocked (redirect URI not added to Google Cloud Console yet)
-- getvoya.net landing page shows our React fallback instead of Santorini HTML on some cached clients (middleware rewrite deployed, propagating)
+- vondrer.com landing page shows our React fallback instead of Santorini HTML on some cached clients (middleware rewrite deployed, propagating)
 
 **AI recommendation engine:**
 - Profile hash (SHA-256) of all onboarding inputs + past trips used as cache key
@@ -52,19 +52,19 @@ const APP_CONTEXT = `
 // ─── Per-agent review focus ───────────────────────────────────────────────────
 
 const REVIEW_PROMPTS = {
-  CPO: `Review the Voya app from your CPO lens. Focus on: onboarding flow quality, user drop-off risks at each step, the locked/unlocked card UX, whether the free tier delivers enough value to convert, and what's missing before the first paying user. Be direct. Flag what would make you personally bounce as a user.`,
+  CPO: `Review the Vondrer app from your CPO lens. Focus on: onboarding flow quality, user drop-off risks at each step, the locked/unlocked card UX, whether the free tier delivers enough value to convert, and what's missing before the first paying user. Be direct. Flag what would make you personally bounce as a user.`,
 
-  CMO: `Review the Voya app from your CMO lens. Focus on: landing page copy and conversion, whether the brand comes through in the app, the "wow moment" (does it exist? when?), shareability of the discover results, and what the #1 acquisition hook should be. Be brutal about what won't make someone screenshot it.`,
+  CMO: `Review the Vondrer app from your CMO lens. Focus on: landing page copy and conversion, whether the brand comes through in the app, the "wow moment" (does it exist? when?), shareability of the discover results, and what the #1 acquisition hook should be. Be brutal about what won't make someone screenshot it.`,
 
-  CTO: `Review the Voya app from your CTO lens. Focus on: architectural decisions (Next.js App Router, Supabase, Claude API), the hash-based recommendation cache design, potential security issues, performance risks at scale, and what you'd refactor first. Also flag whether the current stack can support the full roadmap (paywall, itineraries, booking links, passport).`,
+  CTO: `Review the Vondrer app from your CTO lens. Focus on: architectural decisions (Next.js App Router, Supabase, Claude API), the hash-based recommendation cache design, potential security issues, performance risks at scale, and what you'd refactor first. Also flag whether the current stack can support the full roadmap (paywall, itineraries, booking links, passport).`,
 
-  CFO: `Review the Voya app from your CFO lens. Focus on: Claude API cost per user session, what the burn looks like at 100 / 1,000 / 10,000 users, whether the free tier is too generous or not generous enough, and the unit economics of $9/month Pro. Give numbers where you can estimate them.`,
+  CFO: `Review the Vondrer app from your CFO lens. Focus on: Claude API cost per user session, what the burn looks like at 100 / 1,000 / 10,000 users, whether the free tier is too generous or not generous enough, and the unit economics of $9/month Pro. Give numbers where you can estimate them.`,
 
-  COO: `Review the Voya app from your COO lens. Synthesize what's shipped, what's missing, and give a clear prioritised list of what needs to happen before the VP demo is considered a success and before the first paying user can exist. End with your top 3 actions for this week.`,
+  COO: `Review the Vondrer app from your COO lens. Synthesize what's shipped, what's missing, and give a clear prioritised list of what needs to happen before the VP demo is considered a success and before the first paying user can exist. End with your top 3 actions for this week.`,
 }
 
 // ─── POST /review/app ─────────────────────────────────────────────────────────
-// Triggers all 5 agents to review getvoya.net simultaneously.
+// Triggers all 5 agents to review vondrer.com simultaneously.
 // Streams each response to the hub via WebSocket as it arrives.
 
 router.post('/app', requireAuth, async (req, res) => {
@@ -74,7 +74,7 @@ router.post('/app', requireAuth, async (req, res) => {
   res.json({ status: 'started', agents })
 
   broadcast.broadcast('review-started', {
-    message: 'Board app review initiated — all agents reviewing getvoya.net',
+    message: 'Board app review initiated — all agents reviewing vondrer.com',
     agents,
     timestamp: new Date().toISOString(),
   })

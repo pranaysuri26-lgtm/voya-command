@@ -1,6 +1,6 @@
 'use strict'
 /**
- * r2-backup.js — Voya Command nightly database backup
+ * r2-backup.js — Vondrer Command nightly database backup
  *
  * Spec (locked by CTO/CFO thread):
  *   - Dump the Railway Postgres DB, gzip compress
@@ -15,7 +15,7 @@
  * Required env vars (set in Railway):
  *   DATABASE_URL              — already present
  *   R2_ACCOUNT_ID             — Cloudflare account ID
- *   R2_BUCKET                 — bucket name (e.g. "voya-backups")
+ *   R2_BUCKET                 — bucket name (e.g. "vondrer-backups")
  *   R2_ACCESS_KEY_ID          — R2 API token access key
  *   R2_SECRET_ACCESS_KEY      — R2 API token secret key
  */
@@ -74,7 +74,7 @@ async function nativeDump(dbUrl) {
   const lines = []
 
   try {
-    lines.push(`-- Voya Command database dump`)
+    lines.push(`-- Vondrer Command database dump`)
     lines.push(`-- Generated: ${new Date().toISOString()}`)
     lines.push(`-- Format: INSERT statements with ON CONFLICT DO NOTHING`)
     lines.push('')
@@ -191,7 +191,7 @@ async function pruneOldBackups(r2) {
 async function runBackup() {
   validateEnv()
   const r2  = getR2Client()
-  const key = `backups/voya-${timestamp()}.sql.gz`
+  const key = `backups/vondrer-${timestamp()}.sql.gz`
 
   console.log(`[Backup] Dumping database…`)
   const sql  = await nativeDump(process.env.DATABASE_URL)

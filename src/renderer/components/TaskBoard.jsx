@@ -219,14 +219,14 @@ export default function TaskBoard() {
 
   useEffect(() => {
     load()
-    const unsub = window.voyaAPI.on('task-update', () => load())
+    const unsub = window.vondrerAPI.on('task-update', () => load())
     return () => unsub?.()
   }, [])
 
   async function load() {
     setLoading(true)
     try {
-      const data = await window.voyaAPI.getTasks()
+      const data = await window.vondrerAPI.getTasks()
       setTasks(Array.isArray(data) ? data : [])
     } finally {
       setLoading(false)
@@ -234,17 +234,17 @@ export default function TaskBoard() {
   }
 
   async function handleUpdate(id, fields) {
-    await window.voyaAPI.updateTask(id, fields)
+    await window.vondrerAPI.updateTask(id, fields)
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...fields } : t))
   }
 
   async function handleDelete(id) {
-    await window.voyaAPI.deleteTask(id)
+    await window.vondrerAPI.deleteTask(id)
     setTasks(prev => prev.filter(t => t.id !== id))
   }
 
   async function handleCreate(data) {
-    const task = await window.voyaAPI.createTask(data)
+    const task = await window.vondrerAPI.createTask(data)
     setTasks(prev => [task, ...prev])
   }
 

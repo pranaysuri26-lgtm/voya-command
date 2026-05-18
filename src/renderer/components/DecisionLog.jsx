@@ -27,7 +27,7 @@ export default function DecisionLog() {
   }, [query])
 
   async function load(q) {
-    const results = await window.voyaAPI.getDecisions(q || null)
+    const results = await window.vondrerAPI.getDecisions(q || null)
     setDecisions(results)
   }
 
