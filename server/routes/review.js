@@ -9,58 +9,78 @@ const broadcast = require('../ws/broadcast')
 
 const APP_CONTEXT = `
 ## App under review: vondrer.com
+*Last updated: May 2026*
 
-**What Vondrer is:** AI-powered travel discovery app. Surfaces hidden-gem destinations matched to the user's budget, travel style, and offbeat preference. Freemium: 3 destinations free, rest locked behind a Pro paywall (not yet live).
+**What Vondrer is:** AI-first travel planner covering the full trip lifecycle — destination discovery → day-by-day itinerary generation → in-trip smart replanning → day-of live planner → post-trip passport stamps. Not just a discovery app.
 
-**Current stack:**
-- Next.js 16 (App Router) on Vercel
-- Supabase (auth + Postgres DB)
-- Claude API (claude-opus-4-5) for AI recommendations
-- Tailwind CSS, Cormorant Garamond + Raleway fonts
+**Stack (production):**
+- Next.js 16.2 (App Router, React 19) on Vercel
+- Supabase (auth + Postgres + RLS)
+- AI split: Claude Haiku 4.5 (itinerary generation, visa intel, trip chat, inspiration extraction) + GPT-4o (destination recommendations via SSE streaming, local guide, daily deals) + GPT-4o-mini (activity alternatives, smart day planner)
+- Free external APIs: Nominatim geocoding, Open-Meteo weather, Wikipedia images, sunrise-sunset.org (golden hour)
+- Tailwind CSS 4, Cormorant Garamond + Raleway fonts
 - Domain: vondrer.com | Hub: hub.vondrer.com
+- PWA: service worker, offline fallback, installable
 
 **Full user flow (live today):**
-1. vondrer.com → Santorini landing page (concept-7 HTML) with BEGIN CTA
-2. /signup → 8-step onboarding: account → location (with live currency detection) → budget (shown in local currency) → trip duration → group type → interests (6 options) → offbeat slider (1–5) → past trips
-3. /discover → AI loading screen (animated compass, cycling copy) → 5–10 destination cards ranked by match score. Cards show: name, country, match %, reasons (2-3 tags), budget/day in user's local currency, best time to visit, gem score dots. First 3 unlocked, rest blurred/locked with unlock CTA.
-4. /profile → Edit all preferences + past trips. Saving invalidates AI cache, triggering fresh recommendations on next /discover visit.
+1. vondrer.com → landing page → /login or /signup
+2. /signup → 7-step onboarding: account → location (live currency detection) → budget → duration → group type → interests → dietary/offbeat/timing/past trips
+3. /discover → SSE-streamed destination cards ranked by match score. Cards: name, country, match %, gem score, budget/day in local currency, best time. First 3 free, rest locked.
+4. /plan/new → multi-step trip creation (destinations, dates, budget, group, accessibility)
+5. /plan/ask → conversational day planner with Leaflet map, golden hour times, dietary badges
+6. /trip/[token] → shareable itinerary: day-by-day tabs (morning/afternoon/dinner/evening), insider tips, costs, map pins, activity swap (3 alternatives per slot), trip-specific AI chat
+7. /trips → trip list, mark complete, delete
+8. /guide → local intel (airports, neighbourhoods, food, accommodation, tips) — GPT-4o + Wikipedia images
+9. /deals → 12 AI-generated personalised deals daily (flights, hotels, cards, alerts)
+10. /passport → stamp collection UI (placeholder — logic not yet built)
+11. /developer → API key management (Pro only), Bearer auth, SHA-256 hashing
 
-**What's NOT built yet:**
-- Stripe paywall (unlock banner shows "coming soon")
-- Destination detail page / AI itinerary
-- Booking affiliate links (Booking.com, Skyscanner)
-- Vondrer Passport feature
-- Google OAuth (broken — redirect_uri_mismatch, fix pending)
-- Mobile PWA config
+**What IS built (complete):**
+- Full itinerary generation (Claude Haiku) with pre-trip flight/hotel recommendations
+- Inline activity swap — 3 alternatives per slot (GPT-4o-mini)
+- Visa intelligence — Claude-powered per passport + destination
+- Budget tracker — planned vs actual per category
+- Trip-specific AI chat (Claude Haiku streaming)
+- Smart day planner with real-time weather + time budget (GPT-4o-mini)
+- Inspiration extractor — paste URL/text/image → auto-fill trip form (Claude Haiku vision)
+- Shareable trip links (public, no login required)
+- Developer API with Bearer key auth (Pro only, SHA-256 hashed, 5 keys max)
+- PWA service worker + offline fallback
 
-**Known issues:**
-- Google OAuth blocked (redirect URI not added to Google Cloud Console yet)
-- vondrer.com landing page shows our React fallback instead of Santorini HTML on some cached clients (middleware rewrite deployed, propagating)
+**What is NOT fully built yet:**
+- Stripe /pro/checkout (dead link — the single biggest revenue blocker)
+- Trip limit enforcement (free cap = 5 trips, NOT enforced in code — unlimited itinerary generation at full AI cost)
+- Pro gates on Budget Tracker + Visa Intel (currently accessible by free users)
+- Passport stamp triggers (beautiful UI exists, zero logic)
+- Real-time collaboration (Supabase Realtime not yet wired)
+- Live trip mode (stub only)
 
-**AI recommendation engine:**
-- Profile hash (SHA-256) of all onboarding inputs + past trips used as cache key
-- Cache invalidated on profile save
-- Claude prompt includes: home country, budget (human-readable label), duration, group type, interests, offbeat score description, past trips exclusion list
-- Fallback: stale cache served if Claude fails twice
+**Pricing (DECIDED — do not reopen):**
+- Free: 3 destination recs, 5 trips total (unenforced)
+- Pro: $4.99/month
+- Annual: $29/year (~$2.42/month, save 52%)
+- API access: Pro+ only (or Annual plan)
 
-**Business model:**
-- Free tier: 3 destination cards visible
-- Pro tier (planned): all destinations + itineraries + booking links — $9/month via Stripe
-- API cost target: under $0.08/session
+**AI cost per call (actual):**
+- Itinerary (Claude Haiku): ~$0.006 per generation (3K in + 4K out)
+- Recommendations (GPT-4o): ~$0.027 per call (1K in + 1.5K out)
+- Combined active session with chat: ~$0.04–0.12
+
+**Admin accounts (always Pro, no locks):** pranaysuri26@gmail.com, sehgalnavina09@gmail.com
 `
 
 // ─── Per-agent review focus ───────────────────────────────────────────────────
 
 const REVIEW_PROMPTS = {
-  CPO: `Review the Vondrer app from your CPO lens. Focus on: onboarding flow quality, user drop-off risks at each step, the locked/unlocked card UX, whether the free tier delivers enough value to convert, and what's missing before the first paying user. Be direct. Flag what would make you personally bounce as a user.`,
+  CPO: `Review the Vondrer app from your CPO lens. The core product is substantially built — itinerary generation, activity swaps, visa intel, budget tracker, day planner, API access, and PWA are all live. Focus on: (1) whether the free→Pro conversion funnel is working given the current feature set, (2) which of the unbuilt features (passport stamps, live trip mode, real-time collab) has the highest retention impact, (3) the biggest UX risk in the current trip creation flow. Do not raise Stripe — that's a known blocker. Flag the product risks nobody is talking about.`,
 
-  CMO: `Review the Vondrer app from your CMO lens. Focus on: landing page copy and conversion, whether the brand comes through in the app, the "wow moment" (does it exist? when?), shareability of the discover results, and what the #1 acquisition hook should be. Be brutal about what won't make someone screenshot it.`,
+  CMO: `Review the Vondrer app from your CMO lens. The product is now a full AI travel planner — not just a discovery app. Shareable trip links, passport stamps (UI exists), and AI itineraries are the viral loops. Focus on: (1) whether the current positioning at vondrer.com reflects the full product or just the discovery feature, (2) the strongest organic acquisition hook in what's already built, (3) what a user would share and why. Be specific about what needs to change in copy or UX to make the product feel premium rather than a prototype.`,
 
-  CTO: `Review the Vondrer app from your CTO lens. Focus on: architectural decisions (Next.js App Router, Supabase, Claude API), the hash-based recommendation cache design, potential security issues, performance risks at scale, and what you'd refactor first. Also flag whether the current stack can support the full roadmap (paywall, itineraries, booking links, passport).`,
+  CTO: `Review the Vondrer app from your CTO lens. The stack is Next.js 16 + Supabase + Claude Haiku (structured JSON) + GPT-4o (recommendations/guide/deals) + GPT-4o-mini (alternatives/day planner). Focus on: (1) the biggest unaddressed security or performance risk now that the product has API key auth and public shareable trip links, (2) whether the AI model split is optimal for cost vs quality, (3) what breaks first under real user load. Do not raise trip limit enforcement — that's already flagged. Find the technical debt nobody is watching.`,
 
-  CFO: `Review the Vondrer app from your CFO lens. Focus on: Claude API cost per user session, what the burn looks like at 100 / 1,000 / 10,000 users, whether the free tier is too generous or not generous enough, and the unit economics of $9/month Pro. Give numbers where you can estimate them.`,
+  CFO: `Review the Vondrer app from your CFO lens. Pricing is decided: $4.99/month, $29/year. AI costs are: ~$0.006/itinerary (Claude Haiku), ~$0.027/recommendations call (GPT-4o). The critical exposure is that free users can generate unlimited itineraries at full AI cost with zero revenue — trip limits are unenforced. Focus on: (1) what the actual burn looks like at 100/1,000 free users given current unlimited access, (2) whether $4.99/month holds as the right price given the feature depth now shipped, (3) the annual plan unit economics at $29/year. Give numbers.`,
 
-  COO: `Review the Vondrer app from your COO lens. Synthesize what's shipped, what's missing, and give a clear prioritised list of what needs to happen before the VP demo is considered a success and before the first paying user can exist. End with your top 3 actions for this week.`,
+  COO: `Review the Vondrer app from your COO lens. The product is feature-complete enough to charge. The gap to first revenue is: (1) Stripe /pro/checkout not built, (2) trip limit unenforced, (3) Pro gates missing on Budget Tracker + Visa Intel. Give a crisp prioritised execution plan for the next 2 weeks with clear owners and what unblocks what. End with your single most important call for the Chairman to make this week.`,
 }
 
 // ─── POST /review/app ─────────────────────────────────────────────────────────

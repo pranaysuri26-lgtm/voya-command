@@ -4,26 +4,48 @@
 
 const BRIEF_APP_CONTEXT = `
 ## Current state of Vondrer — vondrer.com
+*Last updated: May 2026*
 
-**What Vondrer is:** AI-powered travel discovery app. Surfaces hidden-gem destinations matched to the user's budget, travel style, and offbeat preference. Freemium: 3 destinations free, rest locked behind a Pro paywall (not yet live).
+**What Vondrer is:** AI-first travel planner covering the full trip lifecycle — destination discovery → day-by-day itinerary → in-trip replanning → day-of live planner → passport stamps. Not just a discovery app.
 
-**Stack:** Next.js 16 (App Router) · Supabase (auth + Postgres) · Claude Haiku (claude-haiku-4-5) · Tailwind CSS · Vercel (app) · Railway (hub)
+**Stack:** Next.js 16.2 (App Router, React 19) · Supabase (auth + Postgres + RLS) · Claude Haiku 4.5 (itinerary, visa, chat) · GPT-4o (recommendations, guide, deals) · GPT-4o-mini (alternatives, day planner) · Tailwind CSS 4 · Vercel (app) · Railway (hub) · PWA with service worker
 
-**Live user flow:**
-1. vondrer.com → landing page → /signup → 8-step onboarding (account, location, budget, duration, group, interests, offbeat 1–5, past trips)
-2. /discover → loading screen → 5–10 ranked destination cards (name, country, match %, reasons, budget/day in local currency, best time, gem score)
-3. Free: top 3 cards visible. Rest blurred with "coming soon" paywall CTA.
-4. /profile → edit preferences → fresh recommendations on next visit.
+**What's fully shipped:**
+- 7-step onboarding with live currency detection
+- SSE-streamed destination recommendations (GPT-4o), first 3 free, rest locked
+- Full day-by-day itinerary generation (Claude Haiku) with flight/hotel pre-trip info
+- Activity swap — 3 alternatives per slot (GPT-4o-mini)
+- Visa intelligence (Claude Haiku per passport + destination)
+- Budget tracker (planned vs actual per category)
+- Trip-specific AI chat (Claude Haiku streaming)
+- Smart day planner with weather + time budget
+- Inspiration extractor (URL/text/image → auto-fill trip form)
+- Shareable trip links (public, no login)
+- Local intel guide (GPT-4o + Wikipedia images)
+- Daily deals — 12 personalised AI deals (GPT-4o)
+- Developer API with Bearer key auth (Pro only)
+- Global AI chat bar (Pro only)
+- PWA offline support
 
-**Stale-while-revalidate:** Stale results shown instantly; fresh Claude call runs in background and swaps in silently.
+**What is NOT yet built:**
+- Stripe /pro/checkout — BIGGEST BLOCKER. All upgrade buttons go to 404.
+- Trip limit enforcement — free cap is 5 trips but UNENFORCED. Free users generate unlimited itineraries at full AI cost.
+- Pro gates on Budget Tracker + Visa Intel — currently free for everyone
+- Passport stamp triggers — UI exists, zero logic
+- Real-time collaboration — Supabase Realtime not wired
+- Live trip mode — stub only
 
-**Not built yet:** Stripe paywall · destination detail / itinerary · booking affiliate links · Vondrer Passport · Google OAuth (broken) · mobile PWA
+**Pricing (DECIDED — closed, do not reopen):**
+- Free: 3 destination recs visible, 5 trips total (unenforced)
+- Pro: $4.99/month
+- Annual: $29/year (save 52%)
 
-**Pricing model (UNRESOLVED):** Currently planned as $9/month. All 5 agents have flagged this as structurally wrong — monthly subscription does not fit episodic travel use (1–2 trips/year). Decision between annual ($29/year), per-trip ($4.99 one-time), and per-itinerary pricing is OPEN and unresolved.
+**AI cost (actual measured):**
+- Itinerary (Claude Haiku): ~$0.006/generation
+- Recommendations (GPT-4o): ~$0.027/call
+- Active session with chat: ~$0.04–0.12 total
 
-**AI cost:** claude-haiku-4-5, max_tokens 1500, target under $0.08/session. Cache hit = $0.
-
-**Known issues:** Google OAuth blocked (redirect URI mismatch). Landing page hero (Santorini) contradicts anti-tourist brand.
+**Critical financial exposure right now:** Free users can generate unlimited itineraries at full AI cost with zero revenue. This scales badly the moment any marketing drives traffic.
 `
 
 const BRIEF_PROMPTS = {
